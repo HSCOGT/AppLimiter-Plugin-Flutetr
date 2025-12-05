@@ -38,33 +38,48 @@ class MyModel: ObservableObject {
             : ShieldSettings.ActivityCategoryPolicy.specific(applications.categoryTokens)
     }
 
-    func setWebDomainRestrictions(domains: [String]) {
+    /// Sets web domain restrictions by shielding the web domains and the parent browser (Safari).
+    ///
+    /// - Parameters:
+    ///   - domains: An array of string representations of web domains (e.g., "youtube.com").
+    ///   - browserBundleID: The bundle identifier of the browser to shield (defaults to Safari).
+    func setWebDomainRestrictions(
+        domains: [String], 
+        browserBundleID: String = "com.apple.mobilesafari"
+    ) {
         print("setWebDomainRestrictions:", domains)
 
-        // The ManagedSettings store
+        // The ManagedSettings store applies the restrictions.
         let store = ManagedSettingsStore()
 
-        // If empty list, remove restrictions completely
-        if domains.isEmpty {
-            store.shield.webDomains = nil
-            return
-        }
-
-        // Convert strings → WebDomainToken
-        let tokens = Set(
+        // 1. Convert strings to WebDomainToken using the correct initializer
+        let webTokens = Set(
             domains.compactMap { domain -> WebDomainToken? in
                 guard !domain.isEmpty else { return nil }
-                return WebDomainToken(domain: domain)
+                
+                // The correct initializer is WebDomainToken(webDomain: String)
+                return WebDomainToken(webDomain: domain) 
             }
         )
 
-        if tokens.isEmpty {
-            print("No valid domains to block")
+        // 2. Handle empty list: remove all restrictions
+        if webTokens.isEmpty {
+            print("Removing all web domain and browser shields.")
             store.shield.webDomains = nil
+            // Optionally unshield the browser if no domains are left
+            store.shield.applications = nil 
             return
         }
 
-        // Apply domain shields
-        store.shield.webDomains = tokens
+        // 3. Apply the parent application shield (e.g., Safari)
+        // NOTE: The bundle ID MUST be one selected by the user in FamilyActivitySelection 
+        // for this restriction to be effective.
+        let applicationToken = ApplicationToken(bundleIdentifier: browserBundleID)
+        store.shield.applications = [applicationToken]
+
+        // 4. Apply the domain shields
+        store.shield.webDomains = webTokens
+        
+        print("Successfully set web domain shields for \(webTokens.count) domains on \(browserBundleID).")
     }
 }

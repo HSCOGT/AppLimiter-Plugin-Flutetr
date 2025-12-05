@@ -50,9 +50,9 @@ class MethodChannelAppLimiter extends AppLimiterPlatform {
 
   /// iOS-specific implementation for unblocking websites
   @override
-  Future<void> unblockWebsitesIos(List<String> domains) async {
+  Future<void> unblockWebsitesIos() async {
     try {
-      await methodChannel.invokeMethod('unblockWebsites', domains);
+      await methodChannel.invokeMethod('unblockWebsites');
     } on PlatformException catch (e) {
       debugPrint('Failed to unblock websites: ${e.message}');
     }

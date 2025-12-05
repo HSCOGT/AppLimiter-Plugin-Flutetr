@@ -40,8 +40,8 @@ class AppLimiter {
   }
 
   /// iOS-specific implementation for unblocking websites
-  Future<void> unblockWebsitesIos(List<String> domains) {
-    return AppLimiterPlatform.instance.unblockWebsitesIos(domains);
+  Future<void> unblockWebsitesIos() {
+    return AppLimiterPlatform.instance.unblockWebsitesIos();
   }
 
   /// Checks if the required Android permissions are granted.
