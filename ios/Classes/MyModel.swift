@@ -41,19 +41,31 @@ class MyModel: ObservableObject {
     func setWebDomainRestrictions(domains: [String]) {
         print("setWebDomainRestrictions:", domains)
 
+        // The ManagedSettings store
+        let store = ManagedSettingsStore()
+
+        // If empty list, remove restrictions completely
         if domains.isEmpty {
             store.shield.webDomains = nil
             return
         }
 
-        let webDomains = domains.compactMap { WebDomain($0) }
+        // Convert strings → WebDomainToken
+        let tokens: Set<WebDomainToken> = Set(
+            domains.compactMap { domain in
+                // Ensure non-empty and valid
+                guard !domain.isEmpty else { return nil }
+                return WebDomainToken(domain: domain)
+            }
+        )
 
-        if webDomains.isEmpty {
+        if tokens.isEmpty {
             print("No valid domains to block")
             store.shield.webDomains = nil
             return
         }
 
-        store.shield.webDomains = .specific(webDomains)
+        // Apply domain shields
+        store.shield.webDomains = tokens
     }
 }
