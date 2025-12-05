@@ -40,13 +40,22 @@ class MyModel: ObservableObject {
 
     func setAutomaticWebFilter() {
         print("Applying automatic web filter (FilterPolicy.auto)")
-        store.webContent.settings = WebContentSettings(
-            filterPolicy: .auto
-        )
+
+        // The ManagedSettings store
+        let store = ManagedSettingsStore()
+
+        // The filter policy to apply
+        let filterPolicy: WebContentSettings.FilterPolicy = .auto()
+        store.webContent.blockedByFilter = filterPolicy
     }
 
     func disableAutomaticWebFilter() {
         print("Removing automatic web filter")
-        store.webContent.settings = nil
+
+        // The ManagedSettings store
+        let store = ManagedSettingsStore()
+
+        // Setting the property to nil removes the restriction
+        store.webContent.blockedByFilter = nil
     }
 }
