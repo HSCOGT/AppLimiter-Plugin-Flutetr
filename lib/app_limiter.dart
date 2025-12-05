@@ -34,6 +34,16 @@ class AppLimiter {
     return AppLimiterPlatform.instance.requestIosPermission();
   }
 
+  /// iOS-specific implementation for blocking and unblocking websites
+  Future<void> blockWebsitesIos(List<String> domains) {
+    return AppLimiterPlatform.instance.blockWebsitesIos(domains);
+  }
+
+  /// iOS-specific implementation for unblocking websites
+  Future<void> unblockWebsitesIos(List<String> domains) {
+    return AppLimiterPlatform.instance.unblockWebsitesIos(domains);
+  }
+
   /// Checks if the required Android permissions are granted.
   ///
   /// Returns a [Future<bool>] that completes with:

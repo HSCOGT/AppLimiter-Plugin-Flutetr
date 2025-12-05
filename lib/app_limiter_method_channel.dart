@@ -38,6 +38,26 @@ class MethodChannelAppLimiter extends AppLimiterPlatform {
     }
   }
 
+  /// iOS-specific implementation for blocking and unblocking websites
+  @override
+  Future<void> blockWebsitesIos(List<String> domains) async {
+    try {
+      await methodChannel.invokeMethod('blockWebsites', domains);
+    } on PlatformException catch (e) {
+      debugPrint('Failed to block websites: ${e.message}');
+    }
+  }
+
+  /// iOS-specific implementation for unblocking websites
+  @override
+  Future<void> unblockWebsitesIos(List<String> domains) async {
+    try {
+      await methodChannel.invokeMethod('unblockWebsites', domains);
+    } on PlatformException catch (e) {
+      debugPrint('Failed to unblock websites: ${e.message}');
+    }
+  }
+
   /// Checks Android permission status through the native implementation
   @override
   Future<bool> isAndroidPermissionAllowed() async {

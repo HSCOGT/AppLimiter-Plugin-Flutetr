@@ -37,4 +37,23 @@ class MyModel: ObservableObject {
             ? nil
             : ShieldSettings.ActivityCategoryPolicy.specific(applications.categoryTokens)
     }
+
+    func setWebDomainRestrictions(domains: [String]) {
+        print("setWebDomainRestrictions:", domains)
+
+        if domains.isEmpty {
+            store.shield.webDomains = nil
+            return
+        }
+
+        let webDomains = domains.compactMap { WebDomain($0) }
+
+        if webDomains.isEmpty {
+            print("No valid domains to block")
+            store.shield.webDomains = nil
+            return
+        }
+
+        store.shield.webDomains = .specific(webDomains)
+    }
 }
