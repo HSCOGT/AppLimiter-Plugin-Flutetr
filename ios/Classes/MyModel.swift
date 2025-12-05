@@ -51,9 +51,8 @@ class MyModel: ObservableObject {
         }
 
         // Convert strings → WebDomainToken
-        let tokens: Set<WebDomainToken> = Set(
-            domains.compactMap { domain in
-                // Ensure non-empty and valid
+        let tokens = Set(
+            domains.compactMap { domain -> WebDomainToken? in
                 guard !domain.isEmpty else { return nil }
                 return WebDomainToken(domain: domain)
             }
