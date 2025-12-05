@@ -51,22 +51,18 @@ public class AppLimiterPlugin: NSObject, FlutterPlugin {
                 result(FlutterError(code: "UNSUPPORTED", message: "iOS 16+ required", details: nil))
             }
 
-        case "blockWebsites":
+        case "setAutomaticWebFilter":
             if #available(iOS 16.0, *) {
-                if let domains = call.arguments as? [String] {
-                    MyModel.shared.setWebDomainRestrictions(domains: domains)
-                    result(nil)
-                } else {
-                    result(FlutterError(code: "INVALID_ARGS", message: "Expected list of domains", details: nil))
-                }
+                MyModel.shared.setAutomaticWebFilter()
+                result(true)
             } else {
                 result(FlutterError(code: "UNSUPPORTED", message: "iOS 16+ required", details: nil))
             }
 
-        case "unblockWebsites":
+        case "disableAutomaticWebFilter":
             if #available(iOS 16.0, *) {
-                MyModel.shared.setWebDomainRestrictions(domains: [])
-                result(nil)
+                MyModel.shared.disableAutomaticWebFilter()
+                result(true)
             } else {
                 result(FlutterError(code: "UNSUPPORTED", message: "iOS 16+ required", details: nil))
             }
