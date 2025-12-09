@@ -34,6 +34,15 @@ class AppLimiter {
     return AppLimiterPlatform.instance.requestIosPermission();
   }
 
+  /// Requests necessary child device authorization on iOS.
+  ///
+  /// Returns a [Future<bool>] that completes with:
+  /// * true - if child device authorization was successfully granted
+  /// * false - if child device authorization was denied or the request failed
+  Future<bool> requestIosChildDeviceAuthorization() {
+    return AppLimiterPlatform.instance.requestIosChildDeviceAuthorization();
+  }
+
   /// iOS-specific implementation for blocking websites
   Future<void> setAutomaticWebFilterIos() {
     return AppLimiterPlatform.instance.setAutomaticWebFilterIos();
