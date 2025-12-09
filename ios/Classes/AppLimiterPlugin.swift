@@ -139,7 +139,7 @@ public class AppLimiterPlugin: NSObject, FlutterPlugin {
 
         Task {
             do {
-                try await AuthorizationCenter.shared.requestAuthorization(for: .familyControls)
+                try await AuthorizationCenter.shared.requestAuthorization(for: .child)
                 let newStatus = AuthorizationCenter.shared.authorizationStatus
                 if newStatus == .approved {
                     result(true)
