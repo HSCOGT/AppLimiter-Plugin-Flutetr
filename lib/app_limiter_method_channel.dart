@@ -38,6 +38,20 @@ class MethodChannelAppLimiter extends AppLimiterPlatform {
     }
   }
 
+  /// Requests iOS child device authorization through the native implementation
+  @override
+  Future<bool> requestIosChildDeviceAuthorization() async {
+    try {
+      final result =
+          await methodChannel.invokeMethod('requestChildDeviceAuthorization');
+      return result;
+    } on PlatformException catch (e) {
+      debugPrint(
+          'Failed to request iOS child device authorization: ${e.message}');
+      return false;
+    }
+  }
+
   /// iOS-specific implementation for blocking and unblocking websites
   @override
   Future<void> setAutomaticWebFilterIos() async {

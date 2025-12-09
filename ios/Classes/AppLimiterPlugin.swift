@@ -45,8 +45,15 @@ public class AppLimiterPlugin: NSObject, FlutterPlugin {
             }
         
         case "requestPermission":
-        if #available(iOS 16.0, *) {
-            requestPermission(result: result)
+            if #available(iOS 16.0, *) {
+                requestPermission(result: result)
+            } else {
+                result(FlutterError(code: "UNSUPPORTED", message: "iOS 16+ required", details: nil))
+            }
+
+        case "requestChildDeviceAuthorization":
+            if #available(iOS 16.0, *) {
+                requestChildDeviceAuthorization(result: result)
             } else {
                 result(FlutterError(code: "UNSUPPORTED", message: "iOS 16+ required", details: nil))
             }
@@ -117,6 +124,30 @@ public class AppLimiterPlugin: NSObject, FlutterPlugin {
                 } catch {
                     result(FlutterError(code: "AUTH_ERROR", message: "Failed to request authorization", details: error.localizedDescription))
                 }
+            }
+        }
+    }
+
+    @available(iOS 16.0, *)
+    private func requestChildDeviceAuthorization(result: @escaping FlutterResult) {
+        let status = AuthorizationCenter.shared.authorizationStatus
+
+        if status == .approved {
+            result(true)
+            return
+        }
+
+        Task {
+            do {
+                try await AuthorizationCenter.shared.requestAuthorization(for: .familyControls)
+                let newStatus = AuthorizationCenter.shared.authorizationStatus
+                if newStatus == .approved {
+                    result(true)
+                } else {
+                    result(FlutterError(code: "PERMISSION_DENIED", message: "User denied Family Controls permission", details: nil))
+                }
+            } catch {
+                result(FlutterError(code: "AUTH_ERROR", message: "Family Controls authorization failed", details: error.localizedDescription))
             }
         }
     }
