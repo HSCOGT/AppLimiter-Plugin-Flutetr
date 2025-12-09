@@ -34,6 +34,16 @@ class AppLimiter {
     return AppLimiterPlatform.instance.requestIosPermission();
   }
 
+  /// iOS-specific implementation for blocking websites
+  Future<void> setAutomaticWebFilterIos() {
+    return AppLimiterPlatform.instance.setAutomaticWebFilterIos();
+  }
+
+  /// iOS-specific implementation for unblocking websites
+  Future<void> disableAutomaticWebFilterIos() {
+    return AppLimiterPlatform.instance.disableAutomaticWebFilterIos();
+  }
+
   /// Checks if the required Android permissions are granted.
   ///
   /// Returns a [Future<bool>] that completes with:

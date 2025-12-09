@@ -39,6 +39,12 @@ abstract class AppLimiterPlatform extends PlatformInterface {
   /// Requests necessary permissions on iOS.
   Future<bool> requestIosPermission();
 
+  /// iOS-specific implementation for blocking and unblocking websites
+  Future<void> setAutomaticWebFilterIos();
+
+  /// iOS-specific implementation for unblocking websites
+  Future<void> disableAutomaticWebFilterIos();
+
   /// Checks if required Android permissions are granted.
   Future<bool> isAndroidPermissionAllowed();
 
