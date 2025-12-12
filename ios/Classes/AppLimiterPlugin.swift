@@ -84,16 +84,20 @@ public class AppLimiterPlugin: NSObject, FlutterPlugin {
         let status = AuthorizationCenter.shared.authorizationStatus
 
         if status == .approved {
-            presentContentView(method: method)
-            result(nil)
+            DispatchQueue.main.async {
+                self.presentContentView(method: method)
+                result(nil)
+            }
         } else {
             Task {
                 do {
                     try await AuthorizationCenter.shared.requestAuthorization(for: .individual)
                     let newStatus = AuthorizationCenter.shared.authorizationStatus
                     if newStatus == .approved {
-                        presentContentView(method: method)
-                        result(nil)
+                        await MainActor.run {
+                            self.presentContentView(method: method)
+                            result(nil)
+                        }
                     } else {
                         result(FlutterError(code: "PERMISSION_DENIED", message: "User denied permission", details: nil))
                     }
@@ -152,6 +156,7 @@ public class AppLimiterPlugin: NSObject, FlutterPlugin {
         }
     }
 
+    @MainActor
     private func presentContentView(method: String) {
         if #available(iOS 13.0, *) {
             guard let rootVC = UIApplication.shared.delegate?.window??.rootViewController else {
