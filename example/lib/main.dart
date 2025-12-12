@@ -52,24 +52,6 @@ class _MyAppState extends State<MyApp> {
     }
   }
 
-  Future<void> blockSpecificApp(String bundleId) async {
-    try {
-      await _appLimiterPlugin.blockSpecificApp(bundleId);
-    } catch (e) {
-      debugPrint(e.toString());
-      rethrow;
-    }
-  }
-
-  Future<void> unblockSpecificApp(String bundleId) async {
-    try {
-      await _appLimiterPlugin.unblockSpecificApp(bundleId);
-    } catch (e) {
-      debugPrint(e.toString());
-      rethrow;
-    }
-  }
-
   Future<bool> requestIosPermission() async {
     try {
       final result = await _appLimiterPlugin.requestIosPermission();

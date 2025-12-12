@@ -26,24 +26,6 @@ class MethodChannelAppLimiter extends AppLimiterPlatform {
     }
   }
 
-  @override
-  Future<void> blockSpecificApp(String bundleId) async {
-    try {
-      await methodChannel.invokeMethod('blockSpecificApp', bundleId);
-    } on PlatformException catch (e) {
-      debugPrint('Failed to block specific app: ${e.message}');
-    }
-  }
-
-  @override
-  Future<void> unblockSpecificApp(String bundleId) async {
-    try {
-      await methodChannel.invokeMethod('unblockSpecificApp', bundleId);
-    } on PlatformException catch (e) {
-      debugPrint('Failed to unblock specific app: ${e.message}');
-    }
-  }
-
   /// Requests iOS permissions through the native implementation
   @override
   Future<bool> requestIosPermission() async {

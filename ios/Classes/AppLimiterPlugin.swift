@@ -43,30 +43,6 @@ public class AppLimiterPlugin: NSObject, FlutterPlugin {
             } else {
                 result(FlutterError(code: "UNSUPPORTED", message: "iOS 16+ required", details: nil))
             }
-
-        case "blockSpecificApp":
-            if #available(iOS 16.0, *) {
-                if let bundleId = call.arguments as? String {
-                    blockApp(bundleId: bundleId)
-                    result(true)
-                } else {
-                    result(FlutterError(code: "INVALID_ARG", message: "Expected bundleId string", details: nil))
-                }
-            } else {
-                result(FlutterError(code: "UNSUPPORTED", message: "iOS 16+ required", details: nil))
-            }
-
-        case "unblockSpecificApp":
-            if #available(iOS 16.0, *) {
-                if let bundleId = call.arguments as? String {
-                    unblockApp(bundleId: bundleId)
-                    result(true)
-                } else {
-                    result(FlutterError(code: "INVALID_ARG", message: "Expected bundleId string", details: nil))
-                }
-            } else {
-                result(FlutterError(code: "UNSUPPORTED", message: "iOS 16+ required", details: nil))
-            }
         
         case "requestPermission":
             if #available(iOS 16.0, *) {

@@ -25,16 +25,6 @@ class AppLimiter {
     return AppLimiterPlatform.instance.handleAppSelection();
   }
 
-  /// Blocks a specific app.
-  Future<void> blockSpecificApp(String bundleId) {
-    return AppLimiterPlatform.instance.blockSpecificApp(bundleId);
-  }
-
-  /// Unblocks a specific app.
-  Future<void> unblockSpecificApp(String bundleId) {
-    return AppLimiterPlatform.instance.unblockSpecificApp(bundleId);
-  }
-
   /// Requests necessary permissions for app limiting functionality on iOS.
   ///
   /// Returns a [Future<bool>] that completes with:
