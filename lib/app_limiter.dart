@@ -25,6 +25,11 @@ class AppLimiter {
     return AppLimiterPlatform.instance.handleAppSelection();
   }
 
+  /// Gets the number of blocked apps.
+  Future<int> getBlockedAppCount() {
+    return AppLimiterPlatform.instance.getBlockedAppCount();
+  }
+
   /// Requests necessary permissions for app limiting functionality on iOS.
   ///
   /// Returns a [Future<bool>] that completes with:

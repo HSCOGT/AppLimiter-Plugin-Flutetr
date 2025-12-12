@@ -43,6 +43,15 @@ public class AppLimiterPlugin: NSObject, FlutterPlugin {
             } else {
                 result(FlutterError(code: "UNSUPPORTED", message: "iOS 16+ required", details: nil))
             }
+
+        case "getBlockedAppCount":
+            if #available(iOS 16.0, *) {
+                let count = MyModel.shared.getBlockedAppCount()
+                result(count)
+            } else {
+                result(FlutterError(code: "UNSUPPORTED", message: "iOS 16+ required", details: nil))
+            }
+
         
         case "requestPermission":
             if #available(iOS 16.0, *) {

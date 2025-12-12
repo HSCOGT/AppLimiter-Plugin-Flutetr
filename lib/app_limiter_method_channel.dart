@@ -26,6 +26,17 @@ class MethodChannelAppLimiter extends AppLimiterPlatform {
     }
   }
 
+  @override
+  Future<int> getBlockedAppCount() async {
+    try {
+      final result = await methodChannel.invokeMethod('getBlockedAppCount');
+      return result;
+    } on PlatformException catch (e) {
+      debugPrint('Failed to get blocked app count: ${e.message}');
+      return 0;
+    }
+  }
+
   /// Requests iOS permissions through the native implementation
   @override
   Future<bool> requestIosPermission() async {

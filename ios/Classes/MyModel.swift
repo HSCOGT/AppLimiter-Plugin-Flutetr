@@ -38,6 +38,16 @@ class MyModel: ObservableObject {
             : ShieldSettings.ActivityCategoryPolicy.specific(applications.categoryTokens)
     }
 
+    func getBlockedAppCount() -> Int {
+        // Use the actual shielded apps that are currently applied
+        if let blockedApps = store.shield.applications {
+            return blockedApps.count
+        }
+
+        // Fallback: use selection model (what user selected)
+        return selectionToDiscourage.applicationTokens.count
+    }
+
     func setAutomaticWebFilter() {
         print("Applying automatic web filter (FilterPolicy.auto)")
 

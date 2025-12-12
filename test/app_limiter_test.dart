@@ -20,6 +20,11 @@ class MockAppLimiterPlatform
   }
 
   @override
+  Future<int> getBlockedAppCount() async {
+    return 0;
+  }
+
+  @override
   Future<bool> requestIosPermission() async {
     return true;
   }

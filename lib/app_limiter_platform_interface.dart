@@ -36,6 +36,9 @@ abstract class AppLimiterPlatform extends PlatformInterface {
   /// Handles blocking and unblocking operations for iOS apps.
   Future<void> handleAppSelection();
 
+  /// Gets the number of blocked apps.
+  Future<int> getBlockedAppCount();
+
   /// Requests necessary permissions on iOS.
   Future<bool> requestIosPermission();
 
