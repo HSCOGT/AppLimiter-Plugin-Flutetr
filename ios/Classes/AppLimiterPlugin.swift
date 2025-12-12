@@ -37,9 +37,33 @@ public class AppLimiterPlugin: NSObject, FlutterPlugin {
         case "getPlatformVersion":
             result("iOS " + UIDevice.current.systemVersion)
 
-        case "blockApp":
+        case "handleAppSelection":
             if #available(iOS 16.0, *) {
                 handleAppSelection(method: "selectAppsToDiscourage", result: result)
+            } else {
+                result(FlutterError(code: "UNSUPPORTED", message: "iOS 16+ required", details: nil))
+            }
+
+        case "blockSpecificApp":
+            if #available(iOS 16.0, *) {
+                if let bundleId = call.arguments as? String {
+                    blockApp(bundleId: bundleId)
+                    result(true)
+                } else {
+                    result(FlutterError(code: "INVALID_ARG", message: "Expected bundleId string", details: nil))
+                }
+            } else {
+                result(FlutterError(code: "UNSUPPORTED", message: "iOS 16+ required", details: nil))
+            }
+
+        case "unblockSpecificApp":
+            if #available(iOS 16.0, *) {
+                if let bundleId = call.arguments as? String {
+                    unblockApp(bundleId: bundleId)
+                    result(true)
+                } else {
+                    result(FlutterError(code: "INVALID_ARG", message: "Expected bundleId string", details: nil))
+                }
             } else {
                 result(FlutterError(code: "UNSUPPORTED", message: "iOS 16+ required", details: nil))
             }
@@ -107,6 +131,42 @@ public class AppLimiterPlugin: NSObject, FlutterPlugin {
             }
         }
     }
+
+    @available(iOS 16.0, *)
+    func blockApp(bundleId: String) {
+        print("Blocking app:", bundleId)
+
+        let store = ManagedSettingsStore()
+
+        guard let token = ApplicationToken(bundleIdentifier: bundleId) else {
+            print("Invalid bundle identifier:", bundleId)
+            return
+        }
+
+        store.shield.applications = [token]
+    }
+
+    @available(iOS 16.0, *)
+    func unblockApp(bundleId: String) {
+        let store = ManagedSettingsStore()
+
+        guard let token = ApplicationToken(bundleIdentifier: bundleId) else {
+            print("Invalid bundle ID:", bundleId)
+            return
+        }
+
+        // Current blocked apps (may be nil)
+        var current = store.shield.applications ?? []
+
+        // Remove only this token
+        current.remove(token)
+
+        // If empty → remove restriction
+        store.shield.applications = current.isEmpty ? nil : current
+
+        print("Unblocked app:", bundleId)
+    }
+
 
     // New method to request permission separately
     @available(iOS 16.0, *)

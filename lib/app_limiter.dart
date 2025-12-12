@@ -21,8 +21,18 @@ class AppLimiter {
   /// This method handles both blocking and unblocking operations for iOS apps.
   /// It uses the Screen Time API on iOS to manage app restrictions.
   /// Throws a [PlatformException] if the operation fails.
-  Future<void> blockAndUnblockIOSApp() {
-    return AppLimiterPlatform.instance.blockAndUnblockIOSApp();
+  Future<void> handleAppSelection() {
+    return AppLimiterPlatform.instance.handleAppSelection();
+  }
+
+  /// Blocks a specific app.
+  Future<void> blockSpecificApp(String bundleId) {
+    return AppLimiterPlatform.instance.blockSpecificApp(bundleId);
+  }
+
+  /// Unblocks a specific app.
+  Future<void> unblockSpecificApp(String bundleId) {
+    return AppLimiterPlatform.instance.unblockSpecificApp(bundleId);
   }
 
   /// Requests necessary permissions for app limiting functionality on iOS.

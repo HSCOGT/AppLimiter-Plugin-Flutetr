@@ -14,7 +14,7 @@ class MockAppLimiterPlatform
   Future<String?> getPlatformVersion() => Future.value('42');
 
   @override
-  Future<void> blockAndUnblockIOSApp() async {
+  Future<void> handleAppSelection() async {
     blockCalled = true;
     unblockCalled = false;
   }
