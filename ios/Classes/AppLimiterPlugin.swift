@@ -203,10 +203,10 @@ public class AppLimiterPlugin: NSObject, FlutterPlugin {
                         self?.appSelectionResult = nil // Clear the stored result
                     }
                 )
-                
+
                 // Using SwiftUI in iOS 15+ devices
                 vc = UIHostingController(
-                    rootView: ContentView()
+                    rootView: contentView
                         .environmentObject(MyModel.shared)
                         .environmentObject(ManagedSettingsStore())
                 )
