@@ -5,6 +5,9 @@ import FamilyControls
 
 @available(iOS 15.0, *)
 struct ContentView: View {
+    // Property for the dismissal callback
+    var onDismiss: ((_ isDone: Bool) -> Void)?
+
     @State private var isDiscouragedPresented = true
     @State private var isEncouragedPresented = false
 
@@ -50,6 +53,7 @@ struct ContentView: View {
                         break
                     }
                     presentationMode.wrappedValue.dismiss()
+                    onDismiss?(true)
                 }
             )
         }
@@ -59,7 +63,7 @@ struct ContentView: View {
 @available(iOS 15.0, *)
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView()
+        ContentView(onDismiss: { _ in })
             .environmentObject(MyModel())
     }
 }

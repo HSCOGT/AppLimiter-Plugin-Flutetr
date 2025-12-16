@@ -16,6 +16,9 @@ var globalMethodCall = ""
 /// - Blocking/unblocking apps using Screen Time API
 /// - Handling permissions for Screen Time functionality
 public class AppLimiterPlugin: NSObject, FlutterPlugin {
+    /// Property to hold the Flutter result callback for app selection
+    private var appSelectionResult: FlutterResult?
+
     /// Registers the plugin with the Flutter engine
     /// Sets up the method channel for communication
     /// - Parameter registrar: The plugin registrar used to set up the channel
@@ -98,12 +101,14 @@ public class AppLimiterPlugin: NSObject, FlutterPlugin {
 
     @available(iOS 16.0, *)
     private func handleAppSelection(method: String, result: @escaping FlutterResult) {
+        // Store the result callback
+        self.appSelectionResult = result
+
         let status = AuthorizationCenter.shared.authorizationStatus
 
         if status == .approved {
             DispatchQueue.main.async {
                 self.presentContentView(method: method)
-                result(nil)
             }
         } else {
             Task {
@@ -113,7 +118,6 @@ public class AppLimiterPlugin: NSObject, FlutterPlugin {
                     if newStatus == .approved {
                         await MainActor.run {
                             self.presentContentView(method: method)
-                            result(nil)
                         }
                     } else {
                         result(FlutterError(code: "PERMISSION_DENIED", message: "User denied permission", details: nil))
@@ -178,6 +182,9 @@ public class AppLimiterPlugin: NSObject, FlutterPlugin {
         if #available(iOS 13.0, *) {
             guard let rootVC = UIApplication.shared.delegate?.window??.rootViewController else {
                 print("Root view controller not found")
+                // Clean up the stored result if we fail to present
+                self.appSelectionResult?(FlutterError(code: "PRESENT_ERROR", message: "Root view controller not found", details: nil))
+                self.appSelectionResult = nil
                 return
             }
 
@@ -185,6 +192,18 @@ public class AppLimiterPlugin: NSObject, FlutterPlugin {
             let vc: UIViewController
 
             if #available(iOS 15.0, *) {
+                // Pass the completion handler into the SwiftUI view
+                let contentView = ContentView(
+                    onDismiss: { [weak self] isDone in
+                        // This closure is called when 'Done' or 'Cancel' is tapped.
+                        // isDone can be used if you need to distinguish between 'Done' (true) and 'Cancel' (false).
+
+                        // Call the stored Flutter result with success (or failure if needed)
+                        self?.appSelectionResult?(isDone ? true : false) // Return a simple value indicating success/failure
+                        self?.appSelectionResult = nil // Clear the stored result
+                    }
+                )
+                
                 // Using SwiftUI in iOS 15+ devices
                 vc = UIHostingController(
                     rootView: ContentView()
