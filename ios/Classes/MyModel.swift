@@ -48,6 +48,14 @@ class MyModel: ObservableObject {
         return selectionToDiscourage.applicationTokens.count
     }
 
+    func isAutomaticWebFilterEnabled() -> Bool {
+        // ManagedSettingsStore is instantiated here for accessing the current value.
+        let store = ManagedSettingsStore()
+
+        // If blockedByFilter is not nil, the filter is enabled
+        return store.webContent.blockedByFilter != nil
+    }
+
     func setAutomaticWebFilter() {
         print("Applying automatic web filter (FilterPolicy.auto)")
 

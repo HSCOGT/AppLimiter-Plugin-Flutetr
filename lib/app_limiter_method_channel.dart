@@ -63,6 +63,18 @@ class MethodChannelAppLimiter extends AppLimiterPlatform {
     }
   }
 
+  @override
+  Future<bool> isAutomaticWebFilterEnabledIos() async {
+    try {
+      final result =
+          await methodChannel.invokeMethod('isAutomaticWebFilterEnabled');
+      return result;
+    } on PlatformException catch (e) {
+      debugPrint('Failed to get automatic web filter status: ${e.message}');
+      return false;
+    }
+  }
+
   /// iOS-specific implementation for blocking and unblocking websites
   @override
   Future<void> setAutomaticWebFilterIos() async {
