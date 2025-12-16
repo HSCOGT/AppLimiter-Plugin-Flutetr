@@ -48,6 +48,11 @@ class AppLimiter {
     return AppLimiterPlatform.instance.requestIosChildDeviceAuthorization();
   }
 
+  /// Checks if automatic web filter is enabled on iOS.
+  Future<bool> isAutomaticWebFilterEnabledIos() {
+    return AppLimiterPlatform.instance.isAutomaticWebFilterEnabledIos();
+  }
+
   /// iOS-specific implementation for blocking websites
   Future<void> setAutomaticWebFilterIos() {
     return AppLimiterPlatform.instance.setAutomaticWebFilterIos();
