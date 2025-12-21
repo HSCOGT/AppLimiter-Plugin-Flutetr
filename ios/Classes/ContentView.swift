@@ -44,7 +44,7 @@ struct ContentView: View {
 @available(iOS 15.0, *)
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView(onDismiss: { _ in })
-            .environmentObject(MyModel())
+        ContentView(applyLocally: true, onDismiss: { _ in })
+            .environmentObject(MyModel.shared)
     }
 }
