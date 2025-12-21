@@ -100,6 +100,17 @@ class MethodChannelAppLimiter extends AppLimiterPlatform {
     }
   }
 
+  @override
+  Future<void> applyRemoteSettings(String jsonString) async {
+    try {
+      await methodChannel.invokeMethod('applyRemoteSettings', {
+        'jsonString': jsonString,
+      });
+    } on PlatformException catch (e) {
+      debugPrint('Failed to apply remote settings: ${e.message}');
+    }
+  }
+
   /// Checks Android permission status through the native implementation
   @override
   Future<bool> isAndroidPermissionAllowed() async {

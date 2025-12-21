@@ -63,6 +63,11 @@ class AppLimiter {
     return AppLimiterPlatform.instance.disableAutomaticWebFilterIos();
   }
 
+  /// iOS-specific implementation for applying remote settings
+  Future<void> applyRemoteSettings(String jsonString) {
+    return AppLimiterPlatform.instance.applyRemoteSettings(jsonString);
+  }
+
   /// Checks if the required Android permissions are granted.
   ///
   /// Returns a [Future<bool>] that completes with:
