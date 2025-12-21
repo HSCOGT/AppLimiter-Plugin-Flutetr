@@ -76,4 +76,36 @@ class MyModel: ObservableObject {
         // Setting the property to nil removes the restriction
         store.webContent.blockedByFilter = nil
     }
+
+    // Helper to convert selection to JSON for Flutter
+    func getEncodedSelection() -> String? {
+        if #available(iOS 16.0, *) {
+            do {
+                let encoder = JSONEncoder()
+                let data = try encoder.encode(selectionToDiscourage)
+                return String(data: data, encoding: .utf8)
+            } catch {
+                print("Failed to encode selection: \(error)")
+                return nil
+            }
+        }
+        return nil
+    }
+
+    // New method for the Child Device to apply received JSON
+    func applyEncodedSelection(jsonString: String) {
+        if #available(iOS 16.0, *) {
+            guard let data = jsonString.data(using: .utf8) else { return }
+            do {
+                let decoder = JSONDecoder()
+                let decodedSelection = try decoder.decode(FamilyActivitySelection.self, from: data)
+                
+                // Update the local selection and apply it
+                self.selectionToDiscourage = decodedSelection
+                setShieldRestrictions()
+            } catch {
+                print("Failed to decode selection: \(error)")
+            }
+        }
+    }
 }

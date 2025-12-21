@@ -36,13 +36,16 @@ public class AppLimiterPlugin: NSObject, FlutterPlugin {
     /// - Parameter call: The method call from Flutter
     /// - Parameter result: The callback to send the result back to Flutter
     public func handle(_ call: FlutterMethodCall, result: @escaping FlutterResult) {
+        let args = call.arguments as? [String: Any]
+        let applyLocally = args?["applyLocally"] as? Bool ?? true // Default to true
+
         switch call.method {
         case "getPlatformVersion":
             result("iOS " + UIDevice.current.systemVersion)
 
         case "handleAppSelection":
             if #available(iOS 16.0, *) {
-                handleAppSelection(method: "selectAppsToDiscourage", result: result)
+                handleAppSelection(method: "selectAppsToDiscourage", applyLocally: applyLocally, result: result)
             } else {
                 result(FlutterError(code: "UNSUPPORTED", message: "iOS 16+ required", details: nil))
             }
@@ -100,7 +103,7 @@ public class AppLimiterPlugin: NSObject, FlutterPlugin {
     }
 
     @available(iOS 16.0, *)
-    private func handleAppSelection(method: String, result: @escaping FlutterResult) {
+    private func handleAppSelection(method: String, applyLocally: Bool, result: @escaping FlutterResult) {
         // Store the result callback
         self.appSelectionResult = result
 
@@ -108,7 +111,7 @@ public class AppLimiterPlugin: NSObject, FlutterPlugin {
 
         if status == .approved {
             DispatchQueue.main.async {
-                self.presentContentView(method: method)
+                self.presentContentView(method: method, applyLocally: applyLocally)
             }
         } else {
             Task {
@@ -117,7 +120,7 @@ public class AppLimiterPlugin: NSObject, FlutterPlugin {
                     let newStatus = AuthorizationCenter.shared.authorizationStatus
                     if newStatus == .approved {
                         await MainActor.run {
-                            self.presentContentView(method: method)
+                            self.presentContentView(method: method, applyLocally: applyLocally)
                         }
                     } else {
                         result(FlutterError(code: "PERMISSION_DENIED", message: "User denied permission", details: nil))
@@ -178,7 +181,7 @@ public class AppLimiterPlugin: NSObject, FlutterPlugin {
     }
 
     @MainActor
-    private func presentContentView(method: String) {
+    private func presentContentView(method: String, applyLocally: Bool) {
         if #available(iOS 13.0, *) {
             guard let rootVC = UIApplication.shared.delegate?.window??.rootViewController else {
                 print("Root view controller not found")
@@ -191,30 +194,22 @@ public class AppLimiterPlugin: NSObject, FlutterPlugin {
             globalMethodCall = method
             let vc: UIViewController
 
-            if #available(iOS 15.0, *) {
-                // Pass the completion handler into the SwiftUI view
-                let contentView = ContentView(
-                    onDismiss: { [weak self] isDone in
-                        // This closure is called when 'Done' or 'Cancel' is tapped.
-                        // isDone can be used if you need to distinguish between 'Done' (true) and 'Cancel' (false).
-
-                        // Call the stored Flutter result with success (or failure if needed)
-                        self?.appSelectionResult?(isDone ? true : false) // Return a simple value indicating success/failure
-                        self?.appSelectionResult = nil // Clear the stored result
+            // Pass the completion handler into the SwiftUI view
+            let contentView = ContentView(
+                applyLocally: applyLocally,
+                onDismiss: { [weak self] encodedSelection in
+                    if let selectionData = encodedSelection {
+                        // Return the JSON string to Flutter for syncing
+                        self?.appSelectionResult?(selectionData)
+                    } else {
+                        self?.appSelectionResult?(nil)
                     }
-                )
+                    self?.appSelectionResult = nil
+                }
+            )
 
-                // Using SwiftUI in iOS 15+ devices
-                vc = UIHostingController(
-                    rootView: contentView
-                        .environmentObject(MyModel.shared)
-                        .environmentObject(ManagedSettingsStore())
-                )
-            } else {
-                // Fallback for earlier versions (UI only, no SwiftUI)
-                vc = UIViewController()
-                // Fallback code to present non-SwiftUI view if needed.
-            }
+            // Using SwiftUI in iOS 15+ devices
+            vc = UIHostingController(rootView: contentView.environmentObject(MyModel.shared))
             rootVC.present(vc, animated: true, completion: nil)
         } else {
             // If the device is older than iOS 13, handle the fallback or error

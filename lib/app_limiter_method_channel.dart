@@ -18,9 +18,11 @@ class MethodChannelAppLimiter extends AppLimiterPlatform {
 
   /// iOS-specific implementation for blocking and unblocking apps
   @override
-  Future<void> handleAppSelection() async {
+  Future<void> handleAppSelection(bool applyLocally) async {
     try {
-      await methodChannel.invokeMethod('handleAppSelection');
+      await methodChannel.invokeMethod('handleAppSelection', {
+        'applyLocally': applyLocally,
+      });
     } on PlatformException catch (e) {
       debugPrint('Failed to block/Unbloc iOS app: ${e.message}');
     }

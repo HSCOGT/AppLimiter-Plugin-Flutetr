@@ -34,7 +34,7 @@ abstract class AppLimiterPlatform extends PlatformInterface {
   Future<String?> getPlatformVersion();
 
   /// Handles blocking and unblocking operations for iOS apps.
-  Future<void> handleAppSelection();
+  Future<void> handleAppSelection(bool applyLocally);
 
   /// Gets the number of blocked apps.
   Future<int> getBlockedAppCount();

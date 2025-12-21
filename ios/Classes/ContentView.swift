@@ -5,55 +5,36 @@ import FamilyControls
 
 @available(iOS 15.0, *)
 struct ContentView: View {
-    // Property for the dismissal callback
-    var onDismiss: ((_ isDone: Bool) -> Void)?
+    var applyLocally: Bool
 
-    @State private var isDiscouragedPresented = true
-    @State private var isEncouragedPresented = false
+    // Property for the dismissal callback
+    var onDismiss: ((_ encodedData: String?) -> Void)?
 
     @EnvironmentObject var model: MyModel
     @Environment(\.presentationMode) var presentationMode
 
-    @ViewBuilder
-    func contentView() -> some View {
-        switch globalMethodCall {
-        case "selectAppsToDiscourage":
-            FamilyActivityPicker(selection: $model.selectionToDiscourage)
-                .onChange(of: model.selectionToDiscourage) { _ in
-                    model.setShieldRestrictions()
-                }
-        case "selectAppsToEncourage":
-            FamilyActivityPicker(selection: $model.selectionToEncourage)
-                .onChange(of: model.selectionToEncourage) { _ in
-                    MySchedule.setSchedule()
-                }
-
-        default:
-            Text("Default")
-        }
-    }
-
     var body: some View {
         NavigationView {
             VStack {
-                contentView()
+                FamilyActivityPicker(selection: $model.selectionToDiscourage)
             }
             .navigationBarTitle("Select Apps", displayMode: .inline)
             .navigationBarItems(
                 leading: Button("Cancel") {
                     presentationMode.wrappedValue.dismiss()
+                    onDismiss?(nil)
                 },
                 trailing: Button("Done") {
-                    switch globalMethodCall {
-                    case "selectAppsToDiscourage":
+                    // 1. Only apply locally if flag is true
+                    if applyLocally {
                         model.setShieldRestrictions()
-                    case "selectAppsToEncourage":
-                        MySchedule.setSchedule()
-                    default:
-                        break
                     }
+                    
+                    // 2. Encode the selection to send back to Flutter
+                    let encodedString = model.getEncodedSelection()
+                    
                     presentationMode.wrappedValue.dismiss()
-                    onDismiss?(true)
+                    onDismiss?(encodedString)
                 }
             )
         }
