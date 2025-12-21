@@ -43,9 +43,10 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  Future<void> handleAppSelection(bool applyLocally) async {
+  Future<String?> handleAppSelection(bool applyLocally) async {
     try {
-      await _appLimiterPlugin.handleAppSelection(applyLocally);
+      final result = await _appLimiterPlugin.handleAppSelection(applyLocally);
+      return result;
     } catch (e) {
       debugPrint(e.toString());
       rethrow;
