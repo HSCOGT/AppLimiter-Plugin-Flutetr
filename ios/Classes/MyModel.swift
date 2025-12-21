@@ -92,19 +92,28 @@ class MyModel: ObservableObject {
         return nil
     }
 
-    // New method for the Child Device to apply received JSON
+    /// Decodes a JSON string from the Parent and applies it to this Child device
     func applyEncodedSelection(jsonString: String) {
         if #available(iOS 16.0, *) {
-            guard let data = jsonString.data(using: .utf8) else { return }
+            guard let data = jsonString.data(using: .utf8) else { 
+                print("Error: Could not convert string to data")
+                return 
+            }
+            
             do {
                 let decoder = JSONDecoder()
                 let decodedSelection = try decoder.decode(FamilyActivitySelection.self, from: data)
                 
-                // Update the local selection and apply it
-                self.selectionToDiscourage = decodedSelection
-                setShieldRestrictions()
+                // 1. Update the local model so the UI stays in sync
+                DispatchQueue.main.async {
+                    self.selectionToDiscourage = decodedSelection
+                    
+                    // 2. Apply to the actual system shield
+                    self.setShieldRestrictions()
+                    print("Successfully applied remote restrictions")
+                }
             } catch {
-                print("Failed to decode selection: \(error)")
+                print("Failed to decode selection: \(error.localizedDescription)")
             }
         }
     }

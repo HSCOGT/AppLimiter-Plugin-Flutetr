@@ -97,6 +97,19 @@ public class AppLimiterPlugin: NSObject, FlutterPlugin {
                 result(FlutterError(code: "UNSUPPORTED", message: "iOS 16+ required", details: nil))
             }
 
+        case "applyRemoteSettings":
+            if #available(iOS 16.0, *) {
+                guard let jsonString = args?["jsonString"] as? String else {
+                    result(FlutterError(code: "INVALID_ARGS", message: "jsonString is required", details: nil))
+                    return
+                }
+                // Call the model to apply the settings
+                MyModel.shared.applyEncodedSelection(jsonString: jsonString)
+                result(true)
+            } else {
+                result(FlutterError(code: "UNSUPPORTED", message: "iOS 16+ required for remote sync", details: nil))
+            }
+
         default:
             result(FlutterMethodNotImplemented)
         }
