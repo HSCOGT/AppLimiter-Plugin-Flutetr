@@ -48,33 +48,21 @@ class MyModel: ObservableObject {
         return selectionToDiscourage.applicationTokens.count
     }
 
+    /// Method to handle Automatic Web Filtering
+    func setAutomaticWebFilter(enabled: Bool) {
+        print("Setting automatic web filter to: \(enabled)")
+        
+        // .auto() is the system-level adult content filter
+        if enabled {
+            store.webContent.blockedByFilter = .auto()
+        } else {
+            store.webContent.blockedByFilter = nil
+        }
+    }
+    
+    // Helper to check if automatic web filter is enabled
     func isAutomaticWebFilterEnabled() -> Bool {
-        // ManagedSettingsStore is instantiated here for accessing the current value.
-        let store = ManagedSettingsStore()
-
-        // If blockedByFilter is not nil, the filter is enabled
         return store.webContent.blockedByFilter != nil
-    }
-
-    func setAutomaticWebFilter() {
-        print("Applying automatic web filter (FilterPolicy.auto)")
-
-        // The ManagedSettings store
-        let store = ManagedSettingsStore()
-
-        // The filter policy to apply
-        let filterPolicy: WebContentSettings.FilterPolicy = .auto()
-        store.webContent.blockedByFilter = filterPolicy
-    }
-
-    func disableAutomaticWebFilter() {
-        print("Removing automatic web filter")
-
-        // The ManagedSettings store
-        let store = ManagedSettingsStore()
-
-        // Setting the property to nil removes the restriction
-        store.webContent.blockedByFilter = nil
     }
 
     // Helper to convert selection to JSON for Flutter

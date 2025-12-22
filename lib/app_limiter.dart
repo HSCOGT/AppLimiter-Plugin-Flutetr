@@ -54,13 +54,8 @@ class AppLimiter {
   }
 
   /// iOS-specific implementation for blocking websites
-  Future<void> setAutomaticWebFilterIos() {
-    return AppLimiterPlatform.instance.setAutomaticWebFilterIos();
-  }
-
-  /// iOS-specific implementation for unblocking websites
-  Future<void> disableAutomaticWebFilterIos() {
-    return AppLimiterPlatform.instance.disableAutomaticWebFilterIos();
+  Future<void> setAutomaticWebFilterIos(bool enabled) {
+    return AppLimiterPlatform.instance.setAutomaticWebFilterIos(enabled);
   }
 
   /// iOS-specific implementation for applying remote settings

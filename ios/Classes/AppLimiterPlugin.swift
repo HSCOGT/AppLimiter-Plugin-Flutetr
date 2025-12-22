@@ -75,23 +75,16 @@ public class AppLimiterPlugin: NSObject, FlutterPlugin {
 
         case "isAutomaticWebFilterEnabled":
             if #available(iOS 16.0, *) {
-                let isEnabled = MyModel.shared.isAutomaticWebFilterEnabled()
-                result(isEnabled)
+                result(MyModel.shared.isAutomaticWebFilterEnabled())
             } else {
                 result(FlutterError(code: "UNSUPPORTED", message: "iOS 16+ required", details: nil))
             }
 
         case "setAutomaticWebFilter":
             if #available(iOS 16.0, *) {
-                MyModel.shared.setAutomaticWebFilter()
-                result(true)
-            } else {
-                result(FlutterError(code: "UNSUPPORTED", message: "iOS 16+ required", details: nil))
-            }
-
-        case "disableAutomaticWebFilter":
-            if #available(iOS 16.0, *) {
-                MyModel.shared.disableAutomaticWebFilter()
+                // Extract the 'enable' parameter from Flutter
+                let shouldEnable = args?["enable"] as? Bool ?? false
+                MyModel.shared.setAutomaticWebFilter(enabled: shouldEnable)
                 result(true)
             } else {
                 result(FlutterError(code: "UNSUPPORTED", message: "iOS 16+ required", details: nil))

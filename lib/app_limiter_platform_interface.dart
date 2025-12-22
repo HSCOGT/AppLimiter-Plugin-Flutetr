@@ -49,10 +49,7 @@ abstract class AppLimiterPlatform extends PlatformInterface {
   Future<bool> isAutomaticWebFilterEnabledIos();
 
   /// iOS-specific implementation for blocking and unblocking websites
-  Future<void> setAutomaticWebFilterIos();
-
-  /// iOS-specific implementation for unblocking websites
-  Future<void> disableAutomaticWebFilterIos();
+  Future<void> setAutomaticWebFilterIos(bool enabled);
 
   /// iOS-specific implementation for applying remote settings
   Future<void> applyRemoteSettings(String jsonString);
