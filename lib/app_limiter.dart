@@ -1,4 +1,7 @@
+import 'android_app.dart';
 import 'app_limiter_platform_interface.dart';
+
+export 'android_app.dart';
 
 /// A Flutter plugin for implementing app usage limitations and restrictions on iOS and Android platforms.
 ///
@@ -21,8 +24,13 @@ class AppLimiter {
   /// This method handles both blocking and unblocking operations for iOS apps.
   /// It uses the Screen Time API on iOS to manage app restrictions.
   /// Throws a [PlatformException] if the operation fails.
-  Future<void> blockAndUnblockIOSApp() {
-    return AppLimiterPlatform.instance.blockAndUnblockIOSApp();
+  Future<String?> handleAppSelection(bool applyLocally) {
+    return AppLimiterPlatform.instance.handleAppSelection(applyLocally);
+  }
+
+  /// Gets the number of blocked apps.
+  Future<int> getBlockedAppCount() {
+    return AppLimiterPlatform.instance.getBlockedAppCount();
   }
 
   /// Requests necessary permissions for app limiting functionality on iOS.
@@ -34,14 +42,65 @@ class AppLimiter {
     return AppLimiterPlatform.instance.requestIosPermission();
   }
 
-  /// iOS-specific implementation for blocking websites
-  Future<void> setAutomaticWebFilterIos() {
-    return AppLimiterPlatform.instance.setAutomaticWebFilterIos();
+  /// Requests necessary child device authorization on iOS.
+  ///
+  /// Returns a [Future<bool>] that completes with:
+  /// * true - if child device authorization was successfully granted
+  /// * false - if child device authorization was denied or the request failed
+  Future<bool> requestIosChildDeviceAuthorization() {
+    return AppLimiterPlatform.instance.requestIosChildDeviceAuthorization();
   }
 
-  /// iOS-specific implementation for unblocking websites
-  Future<void> disableAutomaticWebFilterIos() {
-    return AppLimiterPlatform.instance.disableAutomaticWebFilterIos();
+  /// Checks if automatic web filter is enabled on iOS.
+  Future<bool> isAutomaticWebFilterEnabledIos() {
+    return AppLimiterPlatform.instance.isAutomaticWebFilterEnabledIos();
+  }
+
+  /// iOS-specific implementation for blocking websites
+  Future<void> setAutomaticWebFilterIos(bool enabled) {
+    return AppLimiterPlatform.instance.setAutomaticWebFilterIos(enabled);
+  }
+
+  /// Enables or disables the Android DNS web filter.
+  ///
+  /// The first enable triggers Android's one-time VpnService consent dialog.
+  /// Returns whether the filter is active afterwards — false if the user
+  /// declines consent.
+  Future<bool> setAutomaticWebFilterAndroid(bool enabled) {
+    return AppLimiterPlatform.instance.setAutomaticWebFilterAndroid(enabled);
+  }
+
+  /// Checks whether the Android DNS web filter is currently active.
+  Future<bool> isAutomaticWebFilterEnabledAndroid() {
+    return AppLimiterPlatform.instance.isAutomaticWebFilterEnabledAndroid();
+  }
+
+  /// iOS-specific implementation for applying remote settings
+  Future<void> applyRemoteSettings(String jsonString) {
+    return AppLimiterPlatform.instance.applyRemoteSettings(jsonString);
+  }
+
+  /// Returns every launchable Android app the user can choose to block.
+  ///
+  /// Each [AndroidApp] carries its package name, label and (when available) its
+  /// launcher icon, ready to render in a selection picker.
+  Future<List<AndroidApp>> getInstalledAndroidApps() {
+    return AppLimiterPlatform.instance.getInstalledAndroidApps();
+  }
+
+  /// Returns the package names currently selected for blocking on Android.
+  ///
+  /// Useful for pre-checking the picker with the existing selection.
+  Future<List<String>> getBlockedAndroidApps() {
+    return AppLimiterPlatform.instance.getBlockedAndroidApps();
+  }
+
+  /// Persists the set of Android package names to block.
+  ///
+  /// Returns the number of apps stored. The running blocking service reads this
+  /// selection live, so changes take effect immediately.
+  Future<int> setBlockedAndroidApps(List<String> packageNames) {
+    return AppLimiterPlatform.instance.setBlockedAndroidApps(packageNames);
   }
 
   /// Checks if the required Android permissions are granted.

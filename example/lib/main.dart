@@ -30,8 +30,7 @@ class _MyAppState extends State<MyApp> {
   Future<void> initPlatformState() async {
     String platformVersion;
     try {
-      platformVersion =
-          await _appLimiterPlugin.getPlatformVersion() ??
+      platformVersion = await _appLimiterPlugin.getPlatformVersion() ??
           'Unknown platform version';
     } on PlatformException {
       platformVersion = 'Failed to get platform version.';
@@ -44,9 +43,10 @@ class _MyAppState extends State<MyApp> {
     });
   }
 
-  Future<void> blockOrUnblocIosApp() async {
+  Future<String?> handleAppSelection(bool applyLocally) async {
     try {
-      await _appLimiterPlugin.blockAndUnblockIOSApp();
+      final result = await _appLimiterPlugin.handleAppSelection(applyLocally);
+      return result;
     } catch (e) {
       debugPrint(e.toString());
       rethrow;
@@ -122,11 +122,10 @@ class _MyAppState extends State<MyApp> {
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton(
-                    onPressed: () => blockOrUnblocIosApp(),
+                    onPressed: () => handleAppSelection(true),
                     child: const Text('Block iOS App'),
                   ),
                   const SizedBox(height: 20),
-
                   ElevatedButton(
                     onPressed: () => checkAndroidPermission(),
                     child: const Text('Check Android Permission'),
@@ -137,7 +136,6 @@ class _MyAppState extends State<MyApp> {
                     child: const Text('Request Android Permission'),
                   ),
                   const SizedBox(height: 20),
-
                   ElevatedButton(
                     onPressed: () => blockAndroidApps(),
                     child: const Text('Block Android Apps'),

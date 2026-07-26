@@ -1,5 +1,6 @@
 import 'package:plugin_platform_interface/plugin_platform_interface.dart';
 
+import 'android_app.dart';
 import 'app_limiter_method_channel.dart';
 
 /// The interface that implementations of app_limiter must implement.
@@ -34,16 +35,41 @@ abstract class AppLimiterPlatform extends PlatformInterface {
   Future<String?> getPlatformVersion();
 
   /// Handles blocking and unblocking operations for iOS apps.
-  Future<void> blockAndUnblockIOSApp();
+  Future<String?> handleAppSelection(bool applyLocally);
+
+  /// Gets the number of blocked apps.
+  Future<int> getBlockedAppCount();
 
   /// Requests necessary permissions on iOS.
   Future<bool> requestIosPermission();
 
-  /// iOS-specific implementation for blocking and unblocking websites
-  Future<void> setAutomaticWebFilterIos();
+  /// Requests necessary child device authorization on iOS.
+  Future<bool> requestIosChildDeviceAuthorization();
 
-  /// iOS-specific implementation for unblocking websites
-  Future<void> disableAutomaticWebFilterIos();
+  /// Checks if automatic web filter is enabled on iOS.
+  Future<bool> isAutomaticWebFilterEnabledIos();
+
+  /// iOS-specific implementation for blocking and unblocking websites
+  Future<void> setAutomaticWebFilterIos(bool enabled);
+
+  /// Enables/disables the Android DNS web filter. Returns whether the filter is
+  /// active afterwards (false when VpnService consent is denied).
+  Future<bool> setAutomaticWebFilterAndroid(bool enabled);
+
+  /// Checks if the Android DNS web filter is currently active.
+  Future<bool> isAutomaticWebFilterEnabledAndroid();
+
+  /// iOS-specific implementation for applying remote settings
+  Future<void> applyRemoteSettings(String jsonString);
+
+  /// Returns every launchable Android app the user can choose to block.
+  Future<List<AndroidApp>> getInstalledAndroidApps();
+
+  /// Returns the package names the user has currently selected to block.
+  Future<List<String>> getBlockedAndroidApps();
+
+  /// Persists the set of Android package names to block, returning the count.
+  Future<int> setBlockedAndroidApps(List<String> packageNames);
 
   /// Checks if required Android permissions are granted.
   Future<bool> isAndroidPermissionAllowed();
