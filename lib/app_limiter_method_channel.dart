@@ -93,6 +93,34 @@ class MethodChannelAppLimiter extends AppLimiterPlatform {
     }
   }
 
+  /// Android-specific implementation for enabling/disabling the DNS web filter
+  @override
+  Future<bool> setAutomaticWebFilterAndroid(bool enabled) async {
+    try {
+      final result = await methodChannel.invokeMethod<bool>(
+        'setAutomaticWebFilter',
+        {'enabled': enabled},
+      );
+      return result ?? false;
+    } on PlatformException catch (e) {
+      debugPrint('Failed to set Android web filter: ${e.message}');
+      return false;
+    }
+  }
+
+  /// Android-specific implementation for reading the DNS web filter state
+  @override
+  Future<bool> isAutomaticWebFilterEnabledAndroid() async {
+    try {
+      final result =
+          await methodChannel.invokeMethod<bool>('isAutomaticWebFilterEnabled');
+      return result ?? false;
+    } on PlatformException catch (e) {
+      debugPrint('Failed to get Android web filter status: ${e.message}');
+      return false;
+    }
+  }
+
   @override
   Future<void> applyRemoteSettings(String jsonString) async {
     try {

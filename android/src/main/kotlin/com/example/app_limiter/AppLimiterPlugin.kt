@@ -9,6 +9,7 @@ import android.graphics.Canvas
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
+import android.net.VpnService
 import android.os.*
 import android.provider.Settings
 import java.io.ByteArrayOutputStream
@@ -17,6 +18,7 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
+import io.flutter.plugin.common.PluginRegistry
 import androidx.annotation.NonNull
 import kotlinx.coroutines.*
 import android.Manifest
@@ -39,10 +41,13 @@ import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
  * - MethodCallHandler: For handling method calls from Flutter
  * - ActivityAware: For accessing Activity context and permissions
  */
-class AppLimiterPlugin: FlutterPlugin, MethodCallHandler,ActivityAware {
+class AppLimiterPlugin: FlutterPlugin, MethodCallHandler, ActivityAware,
+    PluginRegistry.ActivityResultListener {
     private lateinit var channel: MethodChannel
     private lateinit var context: Context
     private var activity: Activity? = null
+    // Pending Flutter result awaiting the VpnService consent dialog.
+    private var pendingVpnResult: Result? = null
     // Coroutine scope for background tasks
     var job = Job()
     val scope = CoroutineScope(Dispatchers.Default + job)
@@ -56,8 +61,12 @@ class AppLimiterPlugin: FlutterPlugin, MethodCallHandler,ActivityAware {
         const val KEY_BLOCKING = "Blocking"
         /** Set of package names the user has chosen to block. */
         const val KEY_BLOCKED_PACKAGES = "BlockedPackages"
+        /** Whether the DNS web filter (VpnService) is currently active. */
+        const val KEY_WEB_FILTER_ENABLED = "WebFilterEnabled"
         /** Largest icon dimension (px) returned to Flutter for the picker. */
         const val MAX_ICON_SIZE_PX = 96
+        /** Request code for the VpnService consent dialog. */
+        private const val VPN_REQUEST_CODE = 7001
     }
 
     /** Reads the user's currently selected blocked packages. */
@@ -273,6 +282,60 @@ class AppLimiterPlugin: FlutterPlugin, MethodCallHandler,ActivityAware {
         alarmManager.setExact(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
     }
 
+    /**
+     * Enables the DNS web filter. Requests one-time VpnService consent if it
+     * hasn't been granted; [result] resolves true once the filter is running,
+     * false if consent is denied.
+     */
+    private fun enableWebFilter(result: Result) {
+        val currentActivity = activity
+        if (currentActivity == null) {
+            result.error("NO_ACTIVITY", "Activity is null", null)
+            return
+        }
+        val consentIntent = VpnService.prepare(currentActivity)
+        if (consentIntent == null) {
+            startWebFilterService()
+            result.success(true)
+        } else {
+            if (pendingVpnResult != null) {
+                result.error("VPN_BUSY", "A VPN consent request is already in progress", null)
+                return
+            }
+            pendingVpnResult = result
+            currentActivity.startActivityForResult(consentIntent, VPN_REQUEST_CODE)
+        }
+    }
+
+    private fun disableWebFilter() {
+        val intent = Intent(context, WebFilterVpnService::class.java).apply {
+            action = WebFilterVpnService.ACTION_STOP
+        }
+        context.startService(intent)
+    }
+
+    private fun startWebFilterService() {
+        val intent = Intent(context, WebFilterVpnService::class.java)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(intent)
+        } else {
+            context.startService(intent)
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?): Boolean {
+        if (requestCode != VPN_REQUEST_CODE) return false
+        val result = pendingVpnResult
+        pendingVpnResult = null
+        if (resultCode == Activity.RESULT_OK) {
+            startWebFilterService()
+            result?.success(true)
+        } else {
+            result?.success(false)
+        }
+        return true
+    }
+
     // Flutter plugin lifecycle methods
     /**
      * Called when the plugin is attached to the Flutter engine
@@ -352,14 +415,19 @@ class AppLimiterPlugin: FlutterPlugin, MethodCallHandler,ActivityAware {
                 result.success(blockedPackages().size)
             }
 
-            // Web filtering is not supported on Android yet; answer gracefully so
-            // shared Dart code doesn't hit notImplemented.
             "isAutomaticWebFilterEnabled" -> {
-                result.success(false)
+                val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                result.success(prefs.getBoolean(KEY_WEB_FILTER_ENABLED, false))
             }
 
             "setAutomaticWebFilter" -> {
-                result.success(null)
+                val enabled = call.argument<Boolean>("enabled") ?: false
+                if (enabled) {
+                    enableWebFilter(result)
+                } else {
+                    disableWebFilter()
+                    result.success(false)
+                }
             }
 
             // Remote settings use opaque iOS tokens with no Android equivalent;
@@ -428,8 +496,9 @@ class AppLimiterPlugin: FlutterPlugin, MethodCallHandler,ActivityAware {
      */
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
         activity = binding.activity
+        binding.addActivityResultListener(this)
     }
-    
+
     /**
      * Called when the plugin is detached from an Activity
      * Cleans up the activity reference
@@ -437,15 +506,16 @@ class AppLimiterPlugin: FlutterPlugin, MethodCallHandler,ActivityAware {
     override fun onDetachedFromActivity() {
         activity = null
     }
-    
+
     /**
      * Called when the plugin is reattached to an Activity after configuration changes
      * Updates the activity reference
      */
     override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
         activity = binding.activity
+        binding.addActivityResultListener(this)
     }
-    
+
     /**
      * Called when the plugin is detached from an Activity during configuration changes
      * Cleans up the activity reference

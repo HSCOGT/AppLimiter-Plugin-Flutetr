@@ -10,6 +10,7 @@
       tools:ignore="QueryAllPackagesPermission" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
   <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
@@ -46,6 +47,22 @@
             android:name=".AlarmReceiver"
             android:enabled="true"
             android:exported="false" />
+
+        <!-- DNS-level web filter tunnel. Filters adult/explicit sites by
+             forwarding DNS to a family-filtering resolver. -->
+        <service
+            android:name=".WebFilterVpnService"
+            android:enabled="true"
+            android:exported="false"
+            android:permission="android.permission.BIND_VPN_SERVICE"
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Filters adult and explicit websites via an on-device DNS VPN" />
+            <intent-filter>
+                <action android:name="android.net.VpnService" />
+            </intent-filter>
+        </service>
 
     </application>
 

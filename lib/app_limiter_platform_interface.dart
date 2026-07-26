@@ -52,6 +52,13 @@ abstract class AppLimiterPlatform extends PlatformInterface {
   /// iOS-specific implementation for blocking and unblocking websites
   Future<void> setAutomaticWebFilterIos(bool enabled);
 
+  /// Enables/disables the Android DNS web filter. Returns whether the filter is
+  /// active afterwards (false when VpnService consent is denied).
+  Future<bool> setAutomaticWebFilterAndroid(bool enabled);
+
+  /// Checks if the Android DNS web filter is currently active.
+  Future<bool> isAutomaticWebFilterEnabledAndroid();
+
   /// iOS-specific implementation for applying remote settings
   Future<void> applyRemoteSettings(String jsonString);
 

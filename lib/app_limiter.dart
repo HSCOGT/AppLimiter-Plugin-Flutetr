@@ -61,6 +61,20 @@ class AppLimiter {
     return AppLimiterPlatform.instance.setAutomaticWebFilterIos(enabled);
   }
 
+  /// Enables or disables the Android DNS web filter.
+  ///
+  /// The first enable triggers Android's one-time VpnService consent dialog.
+  /// Returns whether the filter is active afterwards — false if the user
+  /// declines consent.
+  Future<bool> setAutomaticWebFilterAndroid(bool enabled) {
+    return AppLimiterPlatform.instance.setAutomaticWebFilterAndroid(enabled);
+  }
+
+  /// Checks whether the Android DNS web filter is currently active.
+  Future<bool> isAutomaticWebFilterEnabledAndroid() {
+    return AppLimiterPlatform.instance.isAutomaticWebFilterEnabledAndroid();
+  }
+
   /// iOS-specific implementation for applying remote settings
   Future<void> applyRemoteSettings(String jsonString) {
     return AppLimiterPlatform.instance.applyRemoteSettings(jsonString);
