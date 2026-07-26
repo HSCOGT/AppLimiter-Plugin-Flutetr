@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import 'android_app.dart';
 import 'app_limiter_platform_interface.dart';
 
 /// An implementation of [AppLimiterPlatform] that uses method channels.
@@ -100,6 +101,48 @@ class MethodChannelAppLimiter extends AppLimiterPlatform {
       });
     } on PlatformException catch (e) {
       debugPrint('Failed to apply remote settings: ${e.message}');
+    }
+  }
+
+  /// Enumerates launchable Android apps for the selection picker
+  @override
+  Future<List<AndroidApp>> getInstalledAndroidApps() async {
+    try {
+      final result =
+          await methodChannel.invokeMethod<List<dynamic>>('getInstalledApps');
+      return (result ?? [])
+          .map((e) => AndroidApp.fromMap(e as Map<dynamic, dynamic>))
+          .toList();
+    } on PlatformException catch (e) {
+      debugPrint('Failed to get installed Android apps: ${e.message}');
+      return [];
+    }
+  }
+
+  /// Reads the currently blocked Android package names
+  @override
+  Future<List<String>> getBlockedAndroidApps() async {
+    try {
+      final result =
+          await methodChannel.invokeMethod<List<dynamic>>('getBlockedApps');
+      return (result ?? []).map((e) => e as String).toList();
+    } on PlatformException catch (e) {
+      debugPrint('Failed to get blocked Android apps: ${e.message}');
+      return [];
+    }
+  }
+
+  /// Persists the selected Android package names to block
+  @override
+  Future<int> setBlockedAndroidApps(List<String> packageNames) async {
+    try {
+      final result = await methodChannel.invokeMethod<int>('setBlockedApps', {
+        'packages': packageNames,
+      });
+      return result ?? packageNames.length;
+    } on PlatformException catch (e) {
+      debugPrint('Failed to set blocked Android apps: ${e.message}');
+      return 0;
     }
   }
 

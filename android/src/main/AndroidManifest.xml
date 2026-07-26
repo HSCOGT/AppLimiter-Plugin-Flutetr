@@ -1,13 +1,36 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-  package="com.example.app_limiter">
+  xmlns:tools="http://schemas.android.com/tools">
+
+  <!-- Permissions required for Android app blocking. These are merged into the
+       host app's manifest so consumers inherit them automatically. -->
+  <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+  <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS"
+      tools:ignore="ProtectedPermissions" />
+  <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+      tools:ignore="QueryAllPackagesPermission" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+  <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+  <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+  <!-- Allow resolving launchable apps for the picker without QUERY_ALL_PACKAGES
+       being strictly required on Android 11+. -->
+  <queries>
+    <intent>
+      <action android:name="android.intent.action.MAIN" />
+      <category android:name="android.intent.category.LAUNCHER" />
+    </intent>
+  </queries>
+
   <application>
-        <!-- Declare the service that will block apps -->
+        <!-- Foreground service that draws the blocking overlay. -->
         <service
             android:name=".BlockAppService"
             android:enabled="true"
-            android:exported="false" />
+            android:exported="false"
+            android:foregroundServiceType="dataSync" />
 
-        <!-- Declare the receiver that listens for boot events -->
+        <!-- Restarts blocking after the device reboots. -->
         <receiver
             android:name=".BootReceiver"
             android:enabled="true"
@@ -18,12 +41,12 @@
             </intent-filter>
         </receiver>
 
-        <!-- Declare any other receiver like AmarmReceiver if needed -->
+        <!-- Clears the blocking flag when a scheduled alarm fires. -->
         <receiver
-            android:name=".AmarmReceiver"
+            android:name=".AlarmReceiver"
             android:enabled="true"
             android:exported="false" />
-            
+
     </application>
 
 </manifest>

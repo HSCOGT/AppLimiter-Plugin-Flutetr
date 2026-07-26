@@ -122,7 +122,7 @@ class _MyAppState extends State<MyApp> {
                   ),
                   const SizedBox(height: 20),
                   ElevatedButton(
-                    onPressed: () => blockOrUnblocIosApp(),
+                    onPressed: () => handleAppSelection(true),
                     child: const Text('Block iOS App'),
                   ),
                   const SizedBox(height: 20),

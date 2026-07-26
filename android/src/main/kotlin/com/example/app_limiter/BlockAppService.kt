@@ -33,10 +33,10 @@ class BlockAppService : Service() {
     private var overlayView: View? = null
     private val CHANNEL = "flutter_screentime"
     private var isOverlayDisplayed = false
-    private val userApps = ArrayList<ResolveInfo>()
     private var handler: Handler? = null
     private var blockingRunnable: Runnable? = null
     private var currentForegroundApp: String? = null
+    private var isInitialized = false
 
     val params = WindowManager.LayoutParams(
         WindowManager.LayoutParams.MATCH_PARENT,
@@ -70,27 +70,23 @@ class BlockAppService : Service() {
         return lastEvent?.packageName
     }
 
-    fun isBlockedAppInForeground(context: Context): Boolean {
-        val foregroundApp = getCurrentForegroundApp(context)
-        
-        // Update current foreground app
-        currentForegroundApp = foregroundApp
-        
-        if (foregroundApp != null) {
-            for (app in userApps) {
-                if (app.activityInfo.packageName == foregroundApp) {
-                    return true
-                }
-            }
-        }
-        return false
+    /** Reads the user's currently selected blocked packages from prefs. */
+    private fun getBlockedPackages(): Set<String> {
+        val prefs = getSharedPreferences(
+            AppLimiterPlugin.PREFS_NAME,
+            Context.MODE_PRIVATE,
+        )
+        return prefs.getStringSet(AppLimiterPlugin.KEY_BLOCKED_PACKAGES, emptySet())
+            ?: emptySet()
     }
 
-    fun isLauncherApp(resolveInfo: ResolveInfo, context: Context): Boolean {
-        val intent = Intent(Intent.ACTION_MAIN)
-        intent.addCategory(Intent.CATEGORY_HOME)
-        val defaultLauncher = context.packageManager.resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
-        return resolveInfo.activityInfo.packageName == defaultLauncher?.activityInfo?.packageName
+    fun isBlockedAppInForeground(context: Context): Boolean {
+        val foregroundApp = getCurrentForegroundApp(context)
+
+        // Update current foreground app
+        currentForegroundApp = foregroundApp
+
+        return foregroundApp != null && getBlockedPackages().contains(foregroundApp)
     }
 
     private fun showOverlay() {
@@ -116,24 +112,9 @@ class BlockAppService : Service() {
     }
 
     fun blockApps() {
-        val intent = Intent(Intent.ACTION_MAIN, null)
-        intent.addCategory(Intent.CATEGORY_LAUNCHER)
-        val apps: List<ResolveInfo> = packageManager.queryIntentActivities(intent, 0)
-
-        userApps.clear()
-        // Filter out system apps
-        for (app in apps) {
-            // Exclude system apps
-            if ((app.activityInfo.packageName == "com.android.chrome") ||
-                ((app.activityInfo.applicationInfo.flags and ApplicationInfo.FLAG_SYSTEM) == 0 &&
-                !app.activityInfo.name.contains("com.android.launcher") &&
-                !isLauncherApp(app, this) &&
-                app.activityInfo.packageName != this.packageName)
-            ) {
-                userApps.add(app)
-            }
-        }
-        
+        // The set of apps to block is read live from SharedPreferences inside the
+        // blocking loop (see [isBlockedAppInForeground]), so selection changes take
+        // effect without restarting the service.
         startBlockingLoop()
     }
 
@@ -203,9 +184,9 @@ class BlockAppService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         println("[DEBUG] onStartCommand()")
-        windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
-        overlayView = LayoutInflater.from(this).inflate(R.layout.block_overlay, null)
 
+        // startForeground must be (re)called promptly on every start; it is safe
+        // to invoke repeatedly.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(CHANNEL_ID, "BlockAppService Channel", NotificationManager.IMPORTANCE_LOW)
             channel.setShowBadge(false)
@@ -220,7 +201,14 @@ class BlockAppService : Service() {
 
         startForeground(NOTIFICATION_ID, notification)
 
-        blockApps()
+        // Inflate the overlay and start the blocking loop only once, even if the
+        // service is started again while already running.
+        if (!isInitialized) {
+            windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
+            overlayView = LayoutInflater.from(this).inflate(R.layout.block_overlay, null)
+            isInitialized = true
+            blockApps()
+        }
 
         return START_STICKY
     }
@@ -229,13 +217,14 @@ class BlockAppService : Service() {
         super.onDestroy()
         
         // Clean up resources
-        handler?.removeCallbacks(blockingRunnable!!)
+        blockingRunnable?.let { handler?.removeCallbacks(it) }
         handler = null
         blockingRunnable = null
-        
+        isInitialized = false
+
         // Hide overlay if it's showing
         hideOverlay()
-        
+
         println("[DEBUG] onDestroy()")
     }
 }

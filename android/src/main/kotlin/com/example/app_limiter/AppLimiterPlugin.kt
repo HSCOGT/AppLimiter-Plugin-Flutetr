@@ -4,9 +4,14 @@ import android.app.*
 import android.app.usage.*
 import android.content.*
 import android.content.pm.*
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.*
 import android.provider.Settings
+import java.io.ByteArrayOutputStream
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
@@ -41,6 +46,97 @@ class AppLimiterPlugin: FlutterPlugin, MethodCallHandler,ActivityAware {
     // Coroutine scope for background tasks
     var job = Job()
     val scope = CoroutineScope(Dispatchers.Default + job)
+    // Handler used to deliver method-channel results back on the main thread.
+    private val mainHandler = Handler(Looper.getMainLooper())
+
+    companion object {
+        /** SharedPreferences file shared with [BlockAppService]. */
+        const val PREFS_NAME = "app_settings"
+        /** Whether blocking enforcement is currently active. */
+        const val KEY_BLOCKING = "Blocking"
+        /** Set of package names the user has chosen to block. */
+        const val KEY_BLOCKED_PACKAGES = "BlockedPackages"
+        /** Largest icon dimension (px) returned to Flutter for the picker. */
+        const val MAX_ICON_SIZE_PX = 96
+    }
+
+    /** Reads the user's currently selected blocked packages. */
+    private fun blockedPackages(): Set<String> {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getStringSet(KEY_BLOCKED_PACKAGES, emptySet()) ?: emptySet()
+    }
+
+    /**
+     * Enumerates every launchable app (excluding this host app), returning a
+     * list of maps with `packageName`, `appName` and a PNG `icon` byte array.
+     * Runs on a background dispatcher because loading icons is expensive.
+     */
+    private fun getInstalledApps(): List<Map<String, Any?>> {
+        val pm = context.packageManager
+        val intent = Intent(Intent.ACTION_MAIN, null).apply {
+            addCategory(Intent.CATEGORY_LAUNCHER)
+        }
+        val resolveInfos = pm.queryIntentActivities(intent, 0)
+        val seen = HashSet<String>()
+        val apps = ArrayList<Map<String, Any?>>()
+
+        for (info in resolveInfos) {
+            val packageName = info.activityInfo.packageName
+            // De-duplicate (an app can expose multiple launcher activities) and
+            // never let the user block the host app itself.
+            if (packageName == context.packageName || !seen.add(packageName)) {
+                continue
+            }
+            val appName = info.loadLabel(pm).toString()
+            val icon = try {
+                drawableToPngBytes(info.loadIcon(pm))
+            } catch (e: Exception) {
+                null
+            }
+            apps.add(
+                mapOf(
+                    "packageName" to packageName,
+                    "appName" to appName,
+                    "icon" to icon,
+                )
+            )
+        }
+
+        apps.sortBy { (it["appName"] as String).lowercase() }
+        return apps
+    }
+
+    /** Renders a launcher [Drawable] to a size-capped PNG byte array. */
+    private fun drawableToPngBytes(drawable: Drawable): ByteArray? {
+        val bitmap = if (drawable is BitmapDrawable && drawable.bitmap != null) {
+            drawable.bitmap
+        } else {
+            val width = drawable.intrinsicWidth.takeIf { it > 0 } ?: MAX_ICON_SIZE_PX
+            val height = drawable.intrinsicHeight.takeIf { it > 0 } ?: MAX_ICON_SIZE_PX
+            val bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(bmp)
+            drawable.setBounds(0, 0, canvas.width, canvas.height)
+            drawable.draw(canvas)
+            bmp
+        }
+
+        val scaled = if (bitmap.width > MAX_ICON_SIZE_PX || bitmap.height > MAX_ICON_SIZE_PX) {
+            val ratio = MAX_ICON_SIZE_PX.toFloat() / maxOf(bitmap.width, bitmap.height)
+            Bitmap.createScaledBitmap(
+                bitmap,
+                (bitmap.width * ratio).toInt().coerceAtLeast(1),
+                (bitmap.height * ratio).toInt().coerceAtLeast(1),
+                true,
+            )
+        } else {
+            bitmap
+        }
+
+        return ByteArrayOutputStream().use { stream ->
+            scaled.compress(Bitmap.CompressFormat.PNG, 100, stream)
+            stream.toByteArray()
+        }
+    }
 
     // Helper methods from MainActivity.kt
     /**
@@ -206,18 +302,69 @@ class AppLimiterPlugin: FlutterPlugin, MethodCallHandler,ActivityAware {
             }
 
             "blockApp" -> {
-                val sharedPreferences = context.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
-                sharedPreferences.edit().putBoolean("Blocking", true).apply()
+                val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                sharedPreferences.edit().putBoolean(KEY_BLOCKING, true).apply()
                 val intent = Intent(context, BlockAppService::class.java)
-                context.startService(intent)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(intent)
+                } else {
+                    context.startService(intent)
+                }
                 result.success(null)
             }
 
             "unblockApp" -> {
-                val sharedPreferences = context.getSharedPreferences("app_settings", Context.MODE_PRIVATE)
-                sharedPreferences.edit().putBoolean("Blocking", false).apply()
+                val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                sharedPreferences.edit().putBoolean(KEY_BLOCKING, false).apply()
                 val intent = Intent(context, BlockAppService::class.java)
                 context.stopService(intent)
+                result.success(null)
+            }
+
+            "getInstalledApps" -> {
+                scope.launch {
+                    val apps = try {
+                        getInstalledApps()
+                    } catch (e: Exception) {
+                        mainHandler.post {
+                            result.error("INSTALLED_APPS_ERROR", e.message, null)
+                        }
+                        return@launch
+                    }
+                    mainHandler.post { result.success(apps) }
+                }
+            }
+
+            "getBlockedApps" -> {
+                result.success(blockedPackages().toList())
+            }
+
+            "setBlockedApps" -> {
+                val packages = call.argument<List<String>>("packages") ?: emptyList()
+                val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                sharedPreferences.edit()
+                    .putStringSet(KEY_BLOCKED_PACKAGES, packages.toSet())
+                    .apply()
+                result.success(packages.size)
+            }
+
+            "getBlockedAppCount" -> {
+                result.success(blockedPackages().size)
+            }
+
+            // Web filtering is not supported on Android yet; answer gracefully so
+            // shared Dart code doesn't hit notImplemented.
+            "isAutomaticWebFilterEnabled" -> {
+                result.success(false)
+            }
+
+            "setAutomaticWebFilter" -> {
+                result.success(null)
+            }
+
+            // Remote settings use opaque iOS tokens with no Android equivalent;
+            // enforcement is local-only for now.
+            "applyRemoteSettings" -> {
                 result.success(null)
             }
 
