@@ -48,8 +48,9 @@ abstract class AppLimiterPlatform extends PlatformInterface {
   /// Checks if automatic web filter is enabled on iOS.
   Future<bool> isAutomaticWebFilterEnabledIos();
 
-  /// iOS-specific implementation for blocking and unblocking websites
-  Future<void> setAutomaticWebFilterIos(bool enabled);
+  /// iOS-specific implementation for blocking and unblocking websites.
+  /// Returns whether the filter reflects the requested state after the call.
+  Future<bool> setAutomaticWebFilterIos(bool enabled);
 
   /// iOS-specific implementation for applying remote settings
   Future<void> applyRemoteSettings(String jsonString);

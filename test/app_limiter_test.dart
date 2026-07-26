@@ -17,6 +17,7 @@ class MockAppLimiterPlatform
   Future<String?> handleAppSelection(bool applyLocally) async {
     blockCalled = true;
     unblockCalled = false;
+    return null;
   }
 
   @override
@@ -28,6 +29,24 @@ class MockAppLimiterPlatform
   Future<bool> requestIosPermission() async {
     return true;
   }
+
+  @override
+  Future<bool> requestIosChildDeviceAuthorization() async {
+    return true;
+  }
+
+  @override
+  Future<bool> isAutomaticWebFilterEnabledIos() async {
+    return false;
+  }
+
+  @override
+  Future<bool> setAutomaticWebFilterIos(bool enabled) async {
+    return enabled;
+  }
+
+  @override
+  Future<void> applyRemoteSettings(String jsonString) async {}
 
   @override
   Future<bool> isAndroidPermissionAllowed() async {
