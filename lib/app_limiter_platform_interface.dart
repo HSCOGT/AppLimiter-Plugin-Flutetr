@@ -74,8 +74,19 @@ abstract class AppLimiterPlatform extends PlatformInterface {
   /// Checks if required Android permissions are granted.
   Future<bool> isAndroidPermissionAllowed();
 
+  /// Reports the live state of each Android app-blocking permission.
+  ///
+  /// Keys: `usageAccess` and `overlay`. Lets the UI show which permissions are
+  /// still outstanding rather than a single combined flag.
+  Future<Map<String, bool>> getAndroidPermissionStatus();
+
   /// Requests necessary Android permissions.
   Future<void> requestAndroidPermission();
+
+  /// Opens the system settings screen for a single Android permission.
+  ///
+  /// [type] is one of `usageAccess` or `overlay`.
+  Future<void> requestAndroidPermissionType(String type);
 
   /// Blocks specified Android apps.
   Future<void> blockAndroidApps();

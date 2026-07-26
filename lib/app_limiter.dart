@@ -112,6 +112,22 @@ class AppLimiter {
     return AppLimiterPlatform.instance.isAndroidPermissionAllowed();
   }
 
+  /// Reports the live state of each Android app-blocking permission.
+  ///
+  /// Returns a map with `usageAccess` and `overlay` booleans, so the UI can
+  /// show which permissions are still outstanding rather than a single flag.
+  Future<Map<String, bool>> getAndroidPermissionStatus() {
+    return AppLimiterPlatform.instance.getAndroidPermissionStatus();
+  }
+
+  /// Opens the system settings screen for a single Android permission.
+  ///
+  /// [type] is one of `usageAccess` or `overlay`. Lets the UI request each
+  /// permission from its own row.
+  Future<void> requestAndroidPermissionType(String type) {
+    return AppLimiterPlatform.instance.requestAndroidPermissionType(type);
+  }
+
   /// Requests necessary permissions for app limiting functionality on Android.
   ///
   /// This method prompts the user to grant the required permissions for
