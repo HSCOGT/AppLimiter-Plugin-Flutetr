@@ -190,6 +190,24 @@ class MethodChannelAppLimiter extends AppLimiterPlatform {
     }
   }
 
+  /// Reports the live state of each Android app-blocking permission.
+  @override
+  Future<Map<String, bool>> getAndroidPermissionStatus() async {
+    try {
+      final result =
+          await methodChannel.invokeMethod<Map<dynamic, dynamic>>(
+        'getPermissionStatus',
+      );
+      return {
+        'usageAccess': result?['usageAccess'] == true,
+        'overlay': result?['overlay'] == true,
+      };
+    } on PlatformException catch (e) {
+      debugPrint('Failed to get permission status: ${e.message}');
+      return const {'usageAccess': false, 'overlay': false};
+    }
+  }
+
   /// Requests Android permissions through the native implementation
   @override
   Future<void> requestAndroidPermission() async {
@@ -197,6 +215,16 @@ class MethodChannelAppLimiter extends AppLimiterPlatform {
       await methodChannel.invokeMethod('requestAuthorization');
     } on PlatformException catch (e) {
       debugPrint('Failed to request android permission app: ${e.message}');
+    }
+  }
+
+  /// Opens the system settings screen for a single Android permission.
+  @override
+  Future<void> requestAndroidPermissionType(String type) async {
+    try {
+      await methodChannel.invokeMethod('requestPermissionType', {'type': type});
+    } on PlatformException catch (e) {
+      debugPrint('Failed to request android permission ($type): ${e.message}');
     }
   }
 

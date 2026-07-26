@@ -35,7 +35,17 @@ class MockAppLimiterPlatform
   }
 
   @override
+  Future<Map<String, bool>> getAndroidPermissionStatus() async {
+    return const {'usageAccess': true, 'overlay': true};
+  }
+
+  @override
   Future<void> requestAndroidPermission() async {
+    blockCalled = true;
+  }
+
+  @override
+  Future<void> requestAndroidPermissionType(String type) async {
     blockCalled = true;
   }
 

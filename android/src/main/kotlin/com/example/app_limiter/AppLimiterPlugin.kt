@@ -469,6 +469,45 @@ class AppLimiterPlugin: FlutterPlugin, MethodCallHandler, ActivityAware,
     }
 }
 
+            // Reports the live state of each Android permission the app blocker
+            // needs, so the UI can show which ones are still outstanding instead
+            // of a single approved/denied flag.
+            "getPermissionStatus" -> {
+                val overlay = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    Settings.canDrawOverlays(context)
+                } else {
+                    true
+                }
+                val usageAccess = hasUsageStatsPermission(context)
+                result.success(
+                    mapOf(
+                        "usageAccess" to usageAccess,
+                        "overlay" to overlay,
+                    )
+                )
+            }
+
+            // Opens the system settings screen for a single permission, letting
+            // the UI request each one from its own row.
+            "requestPermissionType" -> {
+                val currentActivity = activity
+                if (currentActivity == null) {
+                    result.error("NO_ACTIVITY", "Activity is null", null)
+                    return
+                }
+                when (call.argument<String>("type")) {
+                    "usageAccess" -> {
+                        requestUsageStatsPermission(currentActivity)
+                        result.success(true)
+                    }
+                    "overlay" -> {
+                        requestDrawOverlayPermission(currentActivity, 1234)
+                        result.success(true)
+                    }
+                    else -> result.error("BAD_TYPE", "Unknown permission type", null)
+                }
+            }
+
 
             else -> result.notImplemented()
         }
