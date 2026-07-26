@@ -73,10 +73,10 @@ class BlockAppService : Service() {
     /** Reads the user's currently selected blocked packages from prefs. */
     private fun getBlockedPackages(): Set<String> {
         val prefs = getSharedPreferences(
-            AppLimiterPlugin.PREFS_NAME,
+            AppLimiterPrefs.PREFS_NAME,
             Context.MODE_PRIVATE,
         )
-        return prefs.getStringSet(AppLimiterPlugin.KEY_BLOCKED_PACKAGES, emptySet())
+        return prefs.getStringSet(AppLimiterPrefs.KEY_BLOCKED_PACKAGES, emptySet())
             ?: emptySet()
     }
 

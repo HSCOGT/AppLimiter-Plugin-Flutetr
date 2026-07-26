@@ -264,9 +264,9 @@ class WebFilterVpnService : VpnService() {
     }
 
     private fun setEnabledFlag(enabled: Boolean) {
-        getSharedPreferences(AppLimiterPlugin.PREFS_NAME, Context.MODE_PRIVATE)
+        getSharedPreferences(AppLimiterPrefs.PREFS_NAME, Context.MODE_PRIVATE)
             .edit()
-            .putBoolean(AppLimiterPlugin.KEY_WEB_FILTER_ENABLED, enabled)
+            .putBoolean(AppLimiterPrefs.KEY_WEB_FILTER_ENABLED, enabled)
             .apply()
     }
 

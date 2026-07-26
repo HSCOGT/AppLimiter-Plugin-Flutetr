@@ -55,14 +55,6 @@ class AppLimiterPlugin: FlutterPlugin, MethodCallHandler, ActivityAware,
     private val mainHandler = Handler(Looper.getMainLooper())
 
     companion object {
-        /** SharedPreferences file shared with [BlockAppService]. */
-        const val PREFS_NAME = "app_settings"
-        /** Whether blocking enforcement is currently active. */
-        const val KEY_BLOCKING = "Blocking"
-        /** Set of package names the user has chosen to block. */
-        const val KEY_BLOCKED_PACKAGES = "BlockedPackages"
-        /** Whether the DNS web filter (VpnService) is currently active. */
-        const val KEY_WEB_FILTER_ENABLED = "WebFilterEnabled"
         /** Largest icon dimension (px) returned to Flutter for the picker. */
         const val MAX_ICON_SIZE_PX = 96
         /** Request code for the VpnService consent dialog. */
@@ -71,8 +63,8 @@ class AppLimiterPlugin: FlutterPlugin, MethodCallHandler, ActivityAware,
 
     /** Reads the user's currently selected blocked packages. */
     private fun blockedPackages(): Set<String> {
-        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        return prefs.getStringSet(KEY_BLOCKED_PACKAGES, emptySet()) ?: emptySet()
+        val prefs = context.getSharedPreferences(AppLimiterPrefs.PREFS_NAME, Context.MODE_PRIVATE)
+        return prefs.getStringSet(AppLimiterPrefs.KEY_BLOCKED_PACKAGES, emptySet()) ?: emptySet()
     }
 
     /**
@@ -365,8 +357,8 @@ class AppLimiterPlugin: FlutterPlugin, MethodCallHandler, ActivityAware,
             }
 
             "blockApp" -> {
-                val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-                sharedPreferences.edit().putBoolean(KEY_BLOCKING, true).apply()
+                val sharedPreferences = context.getSharedPreferences(AppLimiterPrefs.PREFS_NAME, Context.MODE_PRIVATE)
+                sharedPreferences.edit().putBoolean(AppLimiterPrefs.KEY_BLOCKING,true).apply()
                 val intent = Intent(context, BlockAppService::class.java)
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                     context.startForegroundService(intent)
@@ -377,8 +369,8 @@ class AppLimiterPlugin: FlutterPlugin, MethodCallHandler, ActivityAware,
             }
 
             "unblockApp" -> {
-                val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-                sharedPreferences.edit().putBoolean(KEY_BLOCKING, false).apply()
+                val sharedPreferences = context.getSharedPreferences(AppLimiterPrefs.PREFS_NAME, Context.MODE_PRIVATE)
+                sharedPreferences.edit().putBoolean(AppLimiterPrefs.KEY_BLOCKING,false).apply()
                 val intent = Intent(context, BlockAppService::class.java)
                 context.stopService(intent)
                 result.success(null)
@@ -404,9 +396,9 @@ class AppLimiterPlugin: FlutterPlugin, MethodCallHandler, ActivityAware,
 
             "setBlockedApps" -> {
                 val packages = call.argument<List<String>>("packages") ?: emptyList()
-                val sharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                val sharedPreferences = context.getSharedPreferences(AppLimiterPrefs.PREFS_NAME, Context.MODE_PRIVATE)
                 sharedPreferences.edit()
-                    .putStringSet(KEY_BLOCKED_PACKAGES, packages.toSet())
+                    .putStringSet(AppLimiterPrefs.KEY_BLOCKED_PACKAGES, packages.toSet())
                     .apply()
                 result.success(packages.size)
             }
@@ -416,8 +408,8 @@ class AppLimiterPlugin: FlutterPlugin, MethodCallHandler, ActivityAware,
             }
 
             "isAutomaticWebFilterEnabled" -> {
-                val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-                result.success(prefs.getBoolean(KEY_WEB_FILTER_ENABLED, false))
+                val prefs = context.getSharedPreferences(AppLimiterPrefs.PREFS_NAME, Context.MODE_PRIVATE)
+                result.success(prefs.getBoolean(AppLimiterPrefs.KEY_WEB_FILTER_ENABLED, false))
             }
 
             "setAutomaticWebFilter" -> {
