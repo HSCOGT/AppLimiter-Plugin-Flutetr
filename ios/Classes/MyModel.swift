@@ -48,16 +48,25 @@ class MyModel: ObservableObject {
         return selectionToDiscourage.applicationTokens.count
     }
 
-    /// Method to handle Automatic Web Filtering
-    func setAutomaticWebFilter(enabled: Bool) {
+    /// Method to handle Automatic Web Filtering.
+    /// Returns whether the store actually reflects the requested state after writing,
+    /// so callers learn about silent failures instead of assuming success.
+    @discardableResult
+    func setAutomaticWebFilter(enabled: Bool) -> Bool {
         print("Setting automatic web filter to: \(enabled)")
-        
-        // .auto() is the system-level adult content filter
+
+        // .auto() is Apple's automatic web filter (the Screen Time
+        // "Limit Adult Websites" setting) — heuristic and server-classified.
         if enabled {
             store.webContent.blockedByFilter = .auto()
         } else {
             store.webContent.blockedByFilter = nil
         }
+
+        // Read the value back so we can confirm the write actually took effect.
+        let applied = store.webContent.blockedByFilter != nil
+        print("Web filter read-back — blockedByFilter != nil: \(applied)")
+        return applied == enabled
     }
     
     // Helper to check if automatic web filter is enabled

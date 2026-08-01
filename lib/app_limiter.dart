@@ -56,8 +56,9 @@ class AppLimiter {
     return AppLimiterPlatform.instance.isAutomaticWebFilterEnabledIos();
   }
 
-  /// iOS-specific implementation for blocking websites
-  Future<void> setAutomaticWebFilterIos(bool enabled) {
+  /// iOS-specific implementation for blocking websites.
+  /// Returns whether the filter reflects the requested state after the call.
+  Future<bool> setAutomaticWebFilterIos(bool enabled) {
     return AppLimiterPlatform.instance.setAutomaticWebFilterIos(enabled);
   }
 
