@@ -1,56 +1,140 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  Full-screen block screen shown over a restricted app. Styled after Shukr:
+  brand gradient background, white wordmark, glass card with the azure hero
+  tile, Jost headings / Mulish body, pill buttons.
+-->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/overlay_gradient">
+    android:background="@drawable/overlay_gradient"
+    android:fitsSystemWindows="true">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:gravity="center"
-        android:padding="32dp">
+        android:gravity="center_horizontal"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
+        android:paddingTop="56dp"
+        android:paddingBottom="40dp">
+
         <ImageView
-            android:layout_width="72dp"
+            android:id="@+id/overlay_wordmark"
+            android:layout_width="132dp"
             android:layout_height="72dp"
-            android:src="@drawable/ic_hourglass"
-            android:tint="#FFFFFF"
-            android:alpha="0.9"
-            android:layout_marginBottom="24dp"
-            android:contentDescription="Screen time icon" />
-        <TextView
-            android:layout_width="wrap_content"
+            android:layout_marginTop="8dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/shukr_wordmark"
+            android:contentDescription="Shukr" />
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Screen Time Blocked"
-            android:textColor="#FFFFFF"
-            android:textSize="28sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:layout_marginBottom="16dp" />
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Take a break. Your focus matters."
-            android:textColor="#CCCCCC"
-            android:textSize="18sp"
-            android:gravity="center"
-            android:layout_marginBottom="16dp" />
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:background="@drawable/overlay_card_bg"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:paddingTop="32dp"
+            android:paddingBottom="28dp">
+
+            <FrameLayout
+                android:layout_width="92dp"
+                android:layout_height="92dp"
+                android:background="@drawable/overlay_tile_bg"
+                android:layout_marginBottom="22dp">
+
+                <ImageView
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_hourglass"
+                    android:tint="#FFFFFFFF"
+                    android:contentDescription="Screen time" />
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/overlay_title"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Take a breath"
+                android:textColor="#FFFFFFFF"
+                android:textSize="28sp"
+                android:fontFamily="@font/jost"
+                android:textFontWeight="700"
+                android:textStyle="bold"
+                android:letterSpacing="-0.01"
+                android:lineSpacingMultiplier="1.1"
+                android:gravity="center"
+                android:layout_marginBottom="10dp" />
+
+            <TextView
+                android:id="@+id/overlay_body"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="You chose to block this app to protect your focus. That choice still stands."
+                android:textColor="#E6FFFFFF"
+                android:textSize="15sp"
+                android:fontFamily="@font/mulish"
+                android:textFontWeight="500"
+                android:lineSpacingMultiplier="1.45"
+                android:gravity="center"
+                android:layout_marginBottom="28dp" />
+
+            <TextView
+                android:id="@+id/overlay_home_button"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:background="@drawable/overlay_button_primary"
+                android:text="Back to home"
+                android:textColor="#FF10285A"
+                android:textSize="16sp"
+                android:fontFamily="@font/jost"
+                android:textFontWeight="600"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:clickable="true"
+                android:focusable="true"
+                android:elevation="4dp" />
+
+            <TextView
+                android:id="@+id/overlay_open_app_button"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/overlay_button_ghost"
+                android:text="Open Shukr"
+                android:textColor="#FFFFFFFF"
+                android:textSize="15sp"
+                android:fontFamily="@font/jost"
+                android:textFontWeight="600"
+                android:gravity="center"
+                android:clickable="true"
+                android:focusable="true" />
+        </LinearLayout>
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
 
         <TextView
+            android:id="@+id/overlay_footer"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="This app is currently unavailable."
+            android:text="Blocked by Shukr · Manage this in the app"
             android:textColor="#99FFFFFF"
-            android:textSize="16sp"
+            android:textSize="12sp"
+            android:fontFamily="@font/mulish"
+            android:textFontWeight="600"
+            android:letterSpacing="0.02"
             android:gravity="center" />
     </LinearLayout>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Digital Wellbeing"
-        android:textColor="#66FFFFFF"
-        android:textSize="14sp"
-        android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="24dp" />
 </FrameLayout>

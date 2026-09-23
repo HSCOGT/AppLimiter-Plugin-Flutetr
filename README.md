@@ -33,6 +33,11 @@ overlay. Runtime diagnostics are logged under the `AppLimiter` tag:
 adb logcat -s AppLimiter
 ```
 
+The block screen (`android/src/main/res/layout/block_overlay.xml`) is styled for
+Shukr: brand gradient, wordmark, and the Jost / Mulish typefaces bundled under
+`android/src/main/res/font/` (SIL Open Font License, see `android/font-licenses/`).
+Its "Back to home" and "Open <app>" buttons are wired in `BlockAppService`.
+
 🪪 Permissions Required
 
 🟢 Android
