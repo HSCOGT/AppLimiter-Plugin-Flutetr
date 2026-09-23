@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ghost pill button: translucent white (ShukrButton.ghost). -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#33FFFFFF">
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="100dp" />
+            <solid android:color="#26FFFFFF" />
+            <stroke
+                android:width="1dp"
+                android:color="#59FFFFFF" />
+        </shape>
+    </item>
+</ripple>

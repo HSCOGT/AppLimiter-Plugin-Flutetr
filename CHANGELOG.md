@@ -35,3 +35,6 @@
   refusals instead of crashing the host app.
 - Android: service diagnostics are logged under the `AppLimiter` logcat tag.
 - Build: Kotlin 2.3 / compileSdk 36; explicit androidx.core and coroutines deps.
+- Android: redesigned block screen in Shukr's look and feel — brand gradient,
+  wordmark, glass card, Jost/Mulish typography (bundled, SIL OFL; see
+  `android/font-licenses/`), plus "Back to home" and "Open <app>" actions.

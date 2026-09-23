@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Primary pill button: white on the brand gradient (ShukrButton.secondary). -->
+<ripple xmlns:android="http://schemas.android.com/apk/res/android"
+    android:color="#3310285A">
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="100dp" />
+            <gradient
+                android:type="linear"
+                android:angle="315"
+                android:startColor="#FFFFFFFF"
+                android:endColor="#FFE5E2E3" />
+        </shape>
+    </item>
+</ripple>
