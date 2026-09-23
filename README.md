@@ -18,8 +18,19 @@ Future<void> blockOrUnblocIosApp()
 Future<bool> requestIosPermission()
 Future<bool> checkAndroidPermission()
 Future<void> requestAndroidPermission()
-Future<void> blockAndroidApps()
-Future<void> unBlockAndroidApps()
+Future<bool> blocAndroidApp()   // false when usage access / overlay permission is missing
+Future<void> unblocAndroidApp()
+```
+
+#### Android blocking service
+
+`BlockAppService` is a `specialUse` foreground service (declared by the plugin's
+manifest, merged into your app). When you upload to Google Play, complete the
+Foreground Service **special use** declaration describing the app-blocking
+overlay. Runtime diagnostics are logged under the `AppLimiter` tag:
+
+```
+adb logcat -s AppLimiter
 ```
 
 🪪 Permissions Required
