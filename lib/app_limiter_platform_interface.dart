@@ -89,8 +89,12 @@ abstract class AppLimiterPlatform extends PlatformInterface {
   /// [type] is one of `usageAccess` or `overlay`.
   Future<void> requestAndroidPermissionType(String type);
 
-  /// Blocks specified Android apps.
-  Future<void> blockAndroidApps();
+  /// Starts Android app blocking for the saved selection.
+  ///
+  /// Resolves `true` when the blocking service was started, `false` when a
+  /// required permission (usage access / overlay) is missing or the system
+  /// refused to start the service.
+  Future<bool> blockAndroidApps();
 
   /// Unblocks previously blocked Android apps.
   Future<void> unblockAndroidApps();

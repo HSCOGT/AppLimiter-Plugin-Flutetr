@@ -138,11 +138,13 @@ class AppLimiter {
     return AppLimiterPlatform.instance.requestAndroidPermission();
   }
 
-  /// Blocks the specified Android app.
+  /// Starts blocking the Android apps saved via [setBlockedAndroidApps].
   ///
-  /// Uses Android's UsageStats API to implement app blocking functionality.
-  /// Throws a [PlatformException] if the blocking operation fails.
-  Future<void> blocAndroidApp() {
+  /// Uses Android's UsageStats API plus a system overlay to enforce blocking.
+  /// Resolves `true` when the blocking service was started and `false` when
+  /// usage access or the overlay permission is missing (nothing is changed in
+  /// that case, so callers should prompt for the permission).
+  Future<bool> blocAndroidApp() {
     return AppLimiterPlatform.instance.blockAndroidApps();
   }
 

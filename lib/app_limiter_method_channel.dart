@@ -231,13 +231,16 @@ class MethodChannelAppLimiter extends AppLimiterPlatform {
     }
   }
 
-  /// Android-specific implementation for blocking apps
+  /// Android-specific implementation for blocking apps. Returns whether the
+  /// blocking service was actually started.
   @override
-  Future<void> blockAndroidApps() async {
+  Future<bool> blockAndroidApps() async {
     try {
-      await methodChannel.invokeMethod('blockApp');
+      final result = await methodChannel.invokeMethod<bool>('blockApp');
+      return result ?? false;
     } on PlatformException catch (e) {
       debugPrint('Failed to block Android app: ${e.message}');
+      return false;
     }
   }
 

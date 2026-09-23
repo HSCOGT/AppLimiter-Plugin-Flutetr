@@ -12,6 +12,7 @@ import android.net.Uri
 import android.net.VpnService
 import android.os.*
 import android.provider.Settings
+import android.util.Log
 import java.io.ByteArrayOutputStream
 import io.flutter.embedding.engine.plugins.FlutterPlugin
 import io.flutter.plugin.common.MethodCall
@@ -55,10 +56,31 @@ class AppLimiterPlugin: FlutterPlugin, MethodCallHandler, ActivityAware,
     private val mainHandler = Handler(Looper.getMainLooper())
 
     companion object {
+        private const val TAG = "AppLimiter"
         /** Largest icon dimension (px) returned to Flutter for the picker. */
         const val MAX_ICON_SIZE_PX = 96
         /** Request code for the VpnService consent dialog. */
         private const val VPN_REQUEST_CODE = 7001
+
+        /**
+         * Starts [BlockAppService] as a foreground service. Returns false instead
+         * of throwing when the system refuses (background-start restrictions,
+         * exhausted FGS quota, ...), so callers never crash the host app.
+         */
+        fun startBlockService(context: Context): Boolean {
+            val intent = Intent(context, BlockAppService::class.java)
+            return try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(intent)
+                } else {
+                    context.startService(intent)
+                }
+                true
+            } catch (e: Exception) {
+                Log.e(TAG, "failed to start BlockAppService", e)
+                false
+            }
+        }
     }
 
     /** Reads the user's currently selected blocked packages. */
@@ -356,16 +378,25 @@ class AppLimiterPlugin: FlutterPlugin, MethodCallHandler, ActivityAware,
                 result.success("Android ${android.os.Build.VERSION.RELEASE}")
             }
 
+            // Starts enforcement. Resolves true when the blocking service was
+            // started, false when a required permission is missing or the system
+            // refused the start; in both false cases nothing is changed so the
+            // caller can surface the problem instead of believing blocking is on.
             "blockApp" -> {
-                val sharedPreferences = context.getSharedPreferences(AppLimiterPrefs.PREFS_NAME, Context.MODE_PRIVATE)
-                sharedPreferences.edit().putBoolean(AppLimiterPrefs.KEY_BLOCKING,true).apply()
-                val intent = Intent(context, BlockAppService::class.java)
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    context.startForegroundService(intent)
+                val hasOverlay = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    Settings.canDrawOverlays(context)
                 } else {
-                    context.startService(intent)
+                    true
                 }
-                result.success(null)
+                val hasUsage = hasUsageStatsPermission(context)
+                if (!hasOverlay || !hasUsage) {
+                    Log.w(TAG, "blockApp refused: overlay=$hasOverlay usageAccess=$hasUsage")
+                    result.success(false)
+                    return
+                }
+                val sharedPreferences = context.getSharedPreferences(AppLimiterPrefs.PREFS_NAME, Context.MODE_PRIVATE)
+                sharedPreferences.edit().putBoolean(AppLimiterPrefs.KEY_BLOCKING, true).apply()
+                result.success(startBlockService(context))
             }
 
             "unblockApp" -> {
@@ -429,9 +460,13 @@ class AppLimiterPlugin: FlutterPlugin, MethodCallHandler, ActivityAware,
             }
 
             "checkPermission" -> {
-                val hasOverlayPermission = activity?.let { checkDrawOverlayPermission(it) } ?: false
-                val hasQueryPermission = activity?.let { requestQueryAllPackagesPermission(it) } ?: false
-                val hasUsageStatsPermission = context.let { hasUsageStatsPermission(it) }
+                val hasOverlayPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                    Settings.canDrawOverlays(context)
+                } else {
+                    true
+                }
+                val hasQueryPermission = checkQueryAllPackagesPermission(context)
+                val hasUsageStatsPermission = hasUsageStatsPermission(context)
 
                 if (hasOverlayPermission && hasQueryPermission && hasUsageStatsPermission) {
                     result.success("approved")

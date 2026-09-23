@@ -9,7 +9,6 @@
   <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
       tools:ignore="QueryAllPackagesPermission" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-  <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
   <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
   <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -24,12 +23,18 @@
   </queries>
 
   <application>
-        <!-- Foreground service that draws the blocking overlay. -->
+        <!-- Foreground service that draws the blocking overlay. Declared as
+             specialUse: dataSync is capped at 6h/day on Android 15+ and cannot
+             be started from BOOT_COMPLETED, which silently ended blocking. -->
         <service
             android:name=".BlockAppService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="dataSync" />
+            android:foregroundServiceType="specialUse">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="Shows a full-screen block screen over apps the user chose to restrict (digital wellbeing)" />
+        </service>
 
         <!-- Restarts blocking after the device reboots. -->
         <receiver
