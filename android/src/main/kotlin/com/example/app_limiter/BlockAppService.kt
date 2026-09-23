@@ -20,6 +20,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.WindowManager
+import android.widget.TextView
 import androidx.core.app.NotificationCompat
 import java.util.concurrent.Executors
 
@@ -58,6 +59,13 @@ class BlockAppService : Service() {
 
     /** Whether we already logged the "permissions missing" state (avoid spam). */
     private var loggedMissingPermissions = false
+
+    /**
+     * Wall-clock time until which the overlay stays hidden after the user tapped
+     * one of its actions, giving the launched home/app activity a moment to
+     * come to the foreground before enforcement resumes.
+     */
+    private var suppressOverlayUntil = 0L
 
     private val overlayParams: WindowManager.LayoutParams by lazy {
         val type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -212,7 +220,56 @@ class BlockAppService : Service() {
             windowManager = getSystemService(Context.WINDOW_SERVICE) as WindowManager
         }
         if (overlayView == null) {
-            overlayView = LayoutInflater.from(this).inflate(R.layout.block_overlay, null)
+            overlayView = LayoutInflater.from(this)
+                .inflate(R.layout.block_overlay, null)
+                .also { bindOverlayActions(it) }
+        }
+    }
+
+    /**
+     * Wires the block screen's actions. Both launch from the service while our
+     * overlay window is visible, which is an allowed background-activity-start
+     * exemption; failures are logged rather than crashing the service.
+     */
+    private fun bindOverlayActions(view: View) {
+        val appLabel = try {
+            packageManager.getApplicationLabel(applicationInfo).toString()
+        } catch (e: Exception) {
+            "the app"
+        }
+
+        view.findViewById<TextView>(R.id.overlay_open_app_button)?.let { button ->
+            button.text = "Open $appLabel"
+            button.setOnClickListener {
+                hideOverlay()
+                val launch = packageManager.getLaunchIntentForPackage(packageName)
+                if (launch == null) {
+                    Log.w(TAG, "no launch intent for $packageName")
+                    return@setOnClickListener
+                }
+                launch.addFlags(
+                    Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED,
+                )
+                startActivitySafely(launch, "open app")
+            }
+        }
+
+        view.findViewById<TextView>(R.id.overlay_home_button)?.setOnClickListener {
+            hideOverlay()
+            val home = Intent(Intent.ACTION_MAIN)
+                .addCategory(Intent.CATEGORY_HOME)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivitySafely(home, "go home")
+        }
+    }
+
+    private fun startActivitySafely(intent: Intent, what: String) {
+        suppressOverlayUntil = System.currentTimeMillis() + ACTION_GRACE_MS
+        try {
+            startActivity(intent)
+            Log.d(TAG, "overlay action: $what")
+        } catch (e: Exception) {
+            Log.e(TAG, "overlay action failed: $what", e)
         }
     }
 
@@ -281,6 +338,7 @@ class BlockAppService : Service() {
                 refreshForegroundApp()
                 val foreground = currentForegroundApp
                 val shouldShow = !isDeviceLocked() &&
+                    System.currentTimeMillis() >= suppressOverlayUntil &&
                     foreground != null &&
                     getBlockedPackages().contains(foreground)
 
@@ -394,5 +452,7 @@ class BlockAppService : Service() {
         private const val SEED_WINDOW_MS = 60_000L
         /** Fallback range for the daily-stats scan when the seed window is empty. */
         private const val SEED_FALLBACK_MS = 24L * 60 * 60 * 1000
+        /** How long the overlay stays hidden after one of its buttons is tapped. */
+        private const val ACTION_GRACE_MS = 1_500L
     }
 }
